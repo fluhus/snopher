@@ -1,36 +1,29 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	"text/template"
 )
 
 func main() {
 	fmt.Println("Hi")
-	f := "/home/amitmit/Desktop/gopyt/foo.h"
-	a, err := readRawLines(f)
+	pkg := "foo"
+	f := "foo.h"
+	dll := "./foo.so"
+	err := processPkg(pkg, f, dll, "foo2.py")
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
-	b, err := tokenizeLines(a)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(2)
-	}
-	c, _ := parseTokens(b)
-	for _, x := range c {
-		fmt.Println(x)
+		fmt.Println("ERROR:", err)
 	}
 }
 
 var (
 	indent  = "    "
-	libName = "_mylib"
+	libName = "_lib"
 	cTypes  = map[string]string{
 		"string":  "GoString",
 		"int":     "ctypes.c_longlong",
@@ -62,9 +55,75 @@ var (
 		"":        "None",
 	}
 
-	goFuncRe = regexp.MustCompile("^func (\\w+)\\((.*)\\)(.*)$")
+	goFuncRe = regexp.MustCompile("^func (\\w+)\\((.*)\\)\\s*(.*)$")
 	cFuncRe  = regexp.MustCompile("^(\\w+) (\\w+)\\((.*)\\)$")
 )
+
+func processPkg(pkg, hfile, dllfile, pyfile string) error {
+	funcs, err := parseHFile(hfile)
+	if err != nil {
+		return err
+	}
+	err = addGodocInfo(funcs, pkg)
+	if err != nil {
+		return err
+	}
+	src, err := generatePythonSource(funcs, dllfile)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(pyfile, src, 0644)
+}
+
+func generatePythonSource(funcs []*function, dllfile string) ([]byte, error) {
+	t := template.Must(template.New("python-src").Funcs(template.FuncMap{
+		"lib":        func() string { return libName },
+		"indent":     func() string { return indent },
+		"ctype":      func(s string) string { return cTypes[s] },
+		"ctypes":     paramCTypes,
+		"pytype":     func(s string) string { return pyTypes[s] },
+		"paramnames": paramNames,
+	}).Parse(srcTemplate))
+
+	buf := &bytes.Buffer{}
+	err := t.Execute(buf, map[string]interface{}{
+		"dll":   dllfile,
+		"funcs": funcs,
+	})
+	return buf.Bytes(), err
+}
+
+func parseHFile(file string) ([]*function, error) {
+	lines, err := readRawLines(file)
+	if err != nil {
+		return nil, err
+	}
+	tokens, err := tokenizeLines(lines)
+	if err != nil {
+		return nil, err
+	}
+	funcs, err := parseTokens(tokens)
+	if err != nil {
+		return nil, err
+	}
+	return funcs, nil
+}
+
+func addGodocInfo(funcs []*function, pkg string) error {
+	for _, f := range funcs {
+		sig, err := goSignature(pkg, f.Name)
+		if err != nil {
+			return err
+		}
+		gofunc, err := parseGoSignature(sig)
+		if err != nil {
+			return err
+		}
+		f.Params = gofunc.Params
+		f.Typ = gofunc.Typ
+	}
+	return nil
+}
 
 func readRawLines(file string) ([]string, error) {
 	src, err := ioutil.ReadFile(file)
@@ -126,9 +185,9 @@ func parseGoSignature(sig string) (*function, error) {
 	for i := len(paramsStr) - 1; i >= 0; i-- {
 		p := paramsStr[i]
 		if len(p) == 1 {
-			p = append(p, paramsStr[i+1][1])
+			paramsStr[i] = append(p, paramsStr[i+1][1])
 		}
-		if len(p) != 2 {
+		if len(paramsStr[i]) != 2 {
 			return nil, fmt.Errorf("bad number of parts (%v) in param: %v",
 				len(p), p)
 		}
@@ -158,7 +217,7 @@ func parseCSignature(sig string, comment []string) (*function, error) {
 		params = append(params, &param{p[0], p[1]})
 	}
 
-	return &function{name, outType, params, strings.Join(comment, "\n")}, nil
+	return &function{name, outType, params, strings.Join(comment, "\n"+indent)}, nil
 }
 
 func splitParams(params string) [][]string {
@@ -177,11 +236,11 @@ func parseTokens(tokens []*token) ([]*function, error) {
 	var result []*function
 	var commentLines []string
 	for _, t := range tokens {
-		if t.typ == "comment" {
-			commentLines = append(commentLines, t.data)
+		if t.Typ == "comment" {
+			commentLines = append(commentLines, t.Data)
 			continue
 		}
-		f, err := parseCSignature(t.data, commentLines)
+		f, err := parseCSignature(t.Data, commentLines)
 		if err != nil {
 			return nil, err
 		}
@@ -191,44 +250,58 @@ func parseTokens(tokens []*token) ([]*function, error) {
 	return result, nil
 }
 
-/*
-def parse_tokens(tokens: List[Tuple]) -> List[Func]:
-    result = []
-    for i, token in enumerate(tokens):
-        if token[0] != 'function':
-            continue
-        if i > 0 and tokens[i - 1][0] == 'comment':
-            result.append(parse_c_signature(token[1], tokens[i - 1][1]))
-        else:
-            result.append(parse_c_signature(token[1], []))
-    return result
-*/
+func paramCTypes(params []*param) string {
+	var types []string
+	for _, p := range params {
+		types = append(types, cTypes[p.Typ])
+	}
+	return strings.Join(types, ", ")
+}
+
+func paramNames(params []*param) string {
+	var names []string
+	for _, p := range params {
+		if p.Typ == "string" {
+			names = append(names, "to_go_string("+p.Name+")")
+		} else {
+			names = append(names, p.Name)
+		}
+	}
+	return strings.Join(names, ", ")
+}
 
 type token struct {
-	typ  string
-	data string
+	Typ  string
+	Data string
 }
 
 type param struct {
-	name string
-	typ  string
+	Name string
+	Typ  string
+}
+
+func (p *param) String() string {
+	return fmt.Sprint(*p)
 }
 
 type function struct {
-	name    string
-	typ     string
-	params  []*param
-	comment string
+	Name    string
+	Typ     string
+	Params  []*param
+	Comment string
 }
 
-var srcTemplate = `import ctypes
+var srcTemplate = `
+{{- /* BOILERPLATE */ -}}
+
+import ctypes
 
 
 class GoString(ctypes.Structure):
     _fields_ = [('p', ctypes.c_char_p), ('n', ctypes.c_int)]
 
 
-def go_string(s):
+def to_go_string(s):
     enc = s.encode()
     return GoString(enc, len(enc))
 
@@ -237,5 +310,34 @@ def from_go_string(s):
     return s.p[:s.n].decode()
 
 
-{{.lib}} = ctypes.CDLL({{.dll}})
+{{lib}} = ctypes.CDLL({{printf "%q" .dll}})
+
+{{/* FUNCTION TYPE INITIALIZATION */ -}}
+{{range .funcs}}
+{{lib}}.{{.Name}}.argtypes = [{{ctypes .Params}}]
+{{lib}}.{{.Name}}.restype = {{ctype .Typ}}
+{{end}}
+
+{{- /* FUNCTIONS */ -}}
+
+{{""}}
+{{range .funcs}}
+
+{{- /* FUNCTION SIGNATURE */}}
+def {{.Name}}(
+{{- range $i, $p := .Params -}}
+{{if gt $i 0}}, {{end -}}
+{{.Name}}: {{pytype .Typ}}
+{{- end -}}
+) -> {{pytype .Typ}}:
+
+{{- /* FUNCTION CONTENT */}}
+{{if .Comment}}{{indent}}"""{{.Comment}}"""
+{{end -}}
+{{indent -}}
+return {{if eq .Typ "string"}}from_go_string({{end -}}
+{{lib}}.{{.Name}}({{paramnames .Params}})
+{{- if eq .Typ "string"}}){{end}}
+
+{{end}}
 `
