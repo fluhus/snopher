@@ -1,2 +1,5 @@
 # snopher
-under construction
+
+Snake + Gopher = <3
+
+(under construction)
