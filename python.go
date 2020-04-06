@@ -87,30 +87,39 @@ var srcTemplate = `
 import ctypes
 
 
+{{lib}}: ctypes.CDLL = None
+
+
 class GoString(ctypes.Structure):
-    _fields_ = [('p', ctypes.c_char_p), ('n', ctypes.c_int)]
+{{indent}}_fields_ = [('p', ctypes.c_char_p), ('n', ctypes.c_int)]
 
 
 def to_go_string(s):
-    enc = s.encode()
-    return GoString(enc, len(enc))
+{{indent}}enc = s.encode()
+{{indent}}return GoString(enc, len(enc))
 
 
 def from_go_string(s):
-    return s.p[:s.n].decode()
+{{indent}}return s.p[:s.n].decode()
 
 
-{{lib}} = ctypes.CDLL({{printf "%q" .dll}})
+{{/* INIT FUNCTION */ -}}
+
+def init(dll_path: str) -> None:
+{{indent}}global {{lib}}
+{{indent}}{{lib}} = ctypes.CDLL(dll_path)
 
 {{/* FUNCTION TYPE INITIALIZATION */ -}}
-{{range .funcs}}
-{{lib}}.{{.Name}}.argtypes = [{{ctypes .Params}}]
-{{lib}}.{{.Name}}.restype = {{ctype .Typ}}
+
+{{range .funcs -}}
+{{indent}}{{lib}}.{{.Name}}.argtypes = [{{ctypes .Params}}]
+{{indent}}{{lib}}.{{.Name}}.restype = {{ctype .Typ}}
+
 {{end}}
+
 
 {{- /* FUNCTIONS */ -}}
 
-{{""}}
 {{range .funcs}}
 
 {{- /* FUNCTION SIGNATURE */}}
@@ -129,5 +138,5 @@ return {{if eq .Typ "string"}}from_go_string({{end -}}
 {{lib}}.{{.Name}}({{paramnames .Params}})
 {{- if eq .Typ "string"}}){{end}}
 
-{{end}}
+{{end -}}
 `
