@@ -48,9 +48,9 @@ func generatePythonSource(funcs []*function, dllfile string) ([]byte, error) {
 		"lib":        func() string { return libName },
 		"indent":     func() string { return indent },
 		"ctype":      func(s string) string { return cTypes[s] },
-		"ctypes":     paramCTypes,
+		"argtypes":   argTypes,
 		"pytype":     func(s string) string { return pyTypes[s] },
-		"paramnames": paramNames,
+		"funcinputs": funcInputs,
 	}).Parse(srcTemplate))
 
 	buf := &bytes.Buffer{}
@@ -61,22 +61,49 @@ func generatePythonSource(funcs []*function, dllfile string) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-func paramCTypes(params []*param) string {
+func (p *param) ArgType() string {
+	t, ok := cTypes[p.Typ]
+	if !ok {
+		panic("unsupported type: " + p.Typ)
+	}
+	return t
+}
+
+func (p *param) ResType() string {
+	t, ok := cTypes[p.Typ]
+	if !ok {
+		panic("unsupported type: " + p.Typ)
+	}
+	return t
+}
+
+func (p *param) PyType() string {
+	t, ok := pyTypes[p.Typ]
+	if !ok {
+		panic("unsupported type: " + p.Typ)
+	}
+	return t
+}
+
+func (p *param) FuncInput() string {
+	if p.Typ == "string" {
+		return "to_go_string(" + p.Name + ")"
+	}
+	return p.Name
+}
+
+func argTypes(params []*param) string {
 	var types []string
 	for _, p := range params {
-		types = append(types, cTypes[p.Typ])
+		types = append(types, p.ArgType())
 	}
 	return strings.Join(types, ", ")
 }
 
-func paramNames(params []*param) string {
+func funcInputs(params []*param) string {
 	var names []string
 	for _, p := range params {
-		if p.Typ == "string" {
-			names = append(names, "to_go_string("+p.Name+")")
-		} else {
-			names = append(names, p.Name)
-		}
+		names = append(names, p.FuncInput())
 	}
 	return strings.Join(names, ", ")
 }
@@ -94,6 +121,11 @@ class GoString(ctypes.Structure):
 {{indent}}_fields_ = [('p', ctypes.c_char_p), ('n', ctypes.c_int)]
 
 
+class GoSlice(ctypes.Structure):
+{{indent}}_fields_ = [('data', ctypes.POINTER), ('len', ctypes.c_int),
+{{indent}}            ('cap', ctypes.c_int)]
+
+
 def to_go_string(s):
 {{indent}}enc = s.encode()
 {{indent}}return GoString(enc, len(enc))
@@ -101,6 +133,10 @@ def to_go_string(s):
 
 def from_go_string(s):
 {{indent}}return s.p[:s.n].decode()
+
+
+def to_go_slice(arr, ctype):
+{{indent}}return GoSlice((ctype * len(arr))(arr), len(arr), len(arr))
 
 
 {{/* INIT FUNCTION */ -}}
@@ -112,7 +148,7 @@ def init(dll_path: str) -> None:
 {{/* FUNCTION TYPE INITIALIZATION */ -}}
 
 {{range .funcs -}}
-{{indent}}{{lib}}.{{.Name}}.argtypes = [{{ctypes .Params}}]
+{{indent}}{{lib}}.{{.Name}}.argtypes = [{{argtypes .Params}}]
 {{indent}}{{lib}}.{{.Name}}.restype = {{ctype .Typ}}
 
 {{end}}
@@ -135,7 +171,7 @@ def {{.Name}}(
 {{end -}}
 {{indent -}}
 return {{if eq .Typ "string"}}from_go_string({{end -}}
-{{lib}}.{{.Name}}({{paramnames .Params}})
+{{lib}}.{{.Name}}({{funcinputs .Params}})
 {{- if eq .Typ "string"}}){{end}}
 
 {{end -}}
