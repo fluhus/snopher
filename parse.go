@@ -74,6 +74,9 @@ func tokenizeLines(lines []string) ([]*token, error) {
 		if strings.HasPrefix(line, "//") {
 			tokens = append(tokens, &token{"comment", strings.Trim(line[2:], " \t")})
 		} else if strings.HasPrefix(line, "extern ") {
+			if strings.HasPrefix(line, "extern struct ") {
+				return nil, fmt.Errorf("multiple return values are not supported (yet): %q", line)
+			}
 			tokens = append(tokens, &token{"function", line[7 : len(line)-1]})
 		} else {
 			return nil, fmt.Errorf("unrecognized line value: %v", line)
@@ -96,7 +99,7 @@ func parseGoSignature(sig string) (*function, error) {
 	// Break down into main parts.
 	match := goFuncRe.FindStringSubmatch(sig)
 	if match == nil {
-		return nil, fmt.Errorf("signature %q does not match expected pattern",
+		return nil, fmt.Errorf("parseGoSignature: signature %q does not match expected pattern",
 			sig)
 	}
 	name, paramsRaw, outType := match[1], match[2], match[3]
@@ -127,7 +130,7 @@ func parseCSignature(sig string, comment []string) (*function, error) {
 	// Break down into main parts.
 	match := cFuncRe.FindStringSubmatch(sig)
 	if match == nil {
-		return nil, fmt.Errorf("signature %q does not match expected pattern",
+		return nil, fmt.Errorf("parseCSignature: signature %q does not match expected pattern",
 			sig)
 	}
 	outType, name, paramsRaw := match[1], match[2], match[3]
