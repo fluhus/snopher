@@ -62,6 +62,13 @@ func generatePythonSource(funcs []*function, dllfile string) ([]byte, error) {
 }
 
 func (p *param) ArgType() string {
+	if strings.HasPrefix(p.Typ, "[]") {
+		_, ok := cTypes[p.Typ[2:]]
+		if !ok {
+			panic("unsupported type: " + p.Typ)
+		}
+		return "GoSlice"
+	}
 	t, ok := cTypes[p.Typ]
 	if !ok {
 		panic("unsupported type: " + p.Typ)
@@ -78,6 +85,13 @@ func (p *param) ResType() string {
 }
 
 func (p *param) PyType() string {
+	if strings.HasPrefix(p.Typ, "[]") {
+		t, ok := pyTypes[p.Typ[2:]]
+		if !ok {
+			panic("unsupported type: " + p.Typ)
+		}
+		return "List[" + t + "]"
+	}
 	t, ok := pyTypes[p.Typ]
 	if !ok {
 		panic("unsupported type: " + p.Typ)
@@ -86,8 +100,12 @@ func (p *param) PyType() string {
 }
 
 func (p *param) FuncInput() string {
+	// TODO(amit): Add a condition for string slices.
+	if strings.HasPrefix(p.Typ, "[]") {
+		return "go_slice(" + p.Name + ", " + cTypes[p.Typ[2:]] + ")"
+	}
 	if p.Typ == "string" {
-		return "to_go_string(" + p.Name + ")"
+		return "go_string(" + p.Name + ")"
 	}
 	return p.Name
 }
@@ -112,6 +130,7 @@ var srcTemplate = `
 {{- /* BOILERPLATE */ -}}
 
 import ctypes
+from typing import List
 
 
 {{lib}}: ctypes.CDLL = None
@@ -122,21 +141,23 @@ class GoString(ctypes.Structure):
 
 
 class GoSlice(ctypes.Structure):
-{{indent}}_fields_ = [('data', ctypes.POINTER), ('len', ctypes.c_int),
-{{indent}}            ('cap', ctypes.c_int)]
+{{indent}}_fields_ = [('data', ctypes.c_void_p),
+{{indent}}            ('len', ctypes.c_longlong),
+{{indent}}            ('cap', ctypes.c_longlong)]
 
 
-def to_go_string(s):
+def go_string(s: str) -> GoString:
 {{indent}}enc = s.encode()
 {{indent}}return GoString(enc, len(enc))
 
 
-def from_go_string(s):
+def from_go_string(s: GoString) -> str:
 {{indent}}return s.p[:s.n].decode()
 
 
-def to_go_slice(arr, ctype):
-{{indent}}return GoSlice((ctype * len(arr))(arr), len(arr), len(arr))
+def go_slice(arr: List, ctype) -> GoSlice:
+{{indent}}p = ctypes.cast((ctype * len(arr))(*arr), ctypes.c_void_p)
+{{indent}}return GoSlice(p, len(arr), len(arr))
 
 
 {{/* INIT FUNCTION */ -}}
@@ -162,7 +183,7 @@ def init(dll_path: str) -> None:
 def {{.Name}}(
 {{- range $i, $p := .Params -}}
 {{if gt $i 0}}, {{end -}}
-{{.Name}}: {{pytype .Typ}}
+{{.Name}}: {{.PyType}}
 {{- end -}}
 ) -> {{pytype .Typ}}:
 
