@@ -2,9 +2,7 @@ A tutorial and cheatsheet on calling Go code from Python, using the ctypes libra
 
 # Introduction
 
-TODO: Add requirements.
-
-## Caveats
+TODO: Add requirements, caveats.
 
 # Hello World
 
@@ -57,6 +55,32 @@ Hello world!
 TODO: Add notes.
 
 # Primitive Input and Output
+
+TODO: Point out type mapping in .h file and architecture safety.
+
+add.go:
+
+```go
+//export add
+func add(a, b int64) int64 {
+    return a + b
+}
+```
+
+add.py:
+
+```python
+lib = ctypes.CDLL('./add.dll')
+add = lib.add
+
+# Make python convert its values to C representation.
+add.argtypes = [ctypes.c_longlong, ctypes.c_longlong]
+add.restype = ctypes.c_longlong
+
+print('10 + 15 =', add(10, 15))
+```
+
+TODO: Discuss argtypes and restype.
 
 # Strings
 
