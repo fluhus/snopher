@@ -1,22 +1,22 @@
 A tutorial and cheatsheet on calling Go code from Python, using the ctypes library.
 
-## Introduction + Hello World
+# Introduction
 
-### Hello World
+## Caveats
 
-### Caveats
+# Hello World
 
-## Primitive Input and Output
+# Primitive Input and Output
 
-## Strings
+# Strings
 
-## Arrays and Slices
+# Arrays and Slices
 
-## Structs
+# Structs
 
-### Multiple Return Values
+## Multiple Return Values
 
-### Strings and Slices
+## Strings and Slices
 
 
 
