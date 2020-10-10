@@ -1,11 +1,23 @@
-# Test Page
+A tutorial and cheatsheet on calling Go code from Python, using the ctypes library.
 
-This is a test.
+## Introduction + Hello World
 
-> Quote!
+### Hello World
 
-Here is some code:
+### Caveats
 
-```python
-import something
-```
+## Primitive Input and Output
+
+## Strings
+
+## Arrays and Slices
+
+## Structs
+
+### Multiple Return Values
+
+### Strings and Slices
+
+
+
+
