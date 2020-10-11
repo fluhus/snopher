@@ -1,4 +1,4 @@
-A tutorial and cheatsheet on calling Go code from Python, using the ctypes library.
+A tutorial and cheatsheet on calling Go code from Python using the ctypes library.
 
 # Introduction
 
@@ -56,7 +56,7 @@ TODO: Add notes.
 
 # Primitive Input and Output
 
-TODO: Point out type mapping in .h file and architecture safety.
+TODO: Point out type mapping in .h file and architecture safety. Mention error handling.
 
 add.go:
 
@@ -80,9 +80,53 @@ add.restype = ctypes.c_longlong
 print('10 + 15 =', add(10, 15))
 ```
 
+Run:
+
+```
+> python add.py
+10 + 15 = 25
+>
+```
+
 TODO: Discuss argtypes and restype.
 
 # Strings
+
+TODO: Mention separate memory spaces.
+
+repeat.go:
+
+```go
+//export repeat
+func repeat(s *C.char, n int64) *C.char {
+	goString := C.GoString(s) // Copy input to Go memory space.
+	result := ""
+	for i := int64(0); i < n; i++ {
+		result += goString
+	}
+	return C.CString(result) // Copy result to C memory space.
+}
+```
+
+repeat.py:
+
+```python
+lib = ctypes.CDLL('./repeat.dll')
+repeat = lib.repeat
+
+repeat.argtypes = [ctypes.c_char_p, ctypes.c_longlong]
+repeat.restype = ctypes.c_char_p
+
+print('Pizza * 4 =', repeat(b'Pizza', 4).decode())
+```
+
+Run:
+
+```
+> python repeat.py
+Pizza * 4 = PizzaPizzaPizzaPizza
+>
+```
 
 # Arrays and Slices
 
