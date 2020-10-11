@@ -99,7 +99,7 @@ repeat.go:
 ```go
 //export repeat
 func repeat(s *C.char, n int64) *C.char {
-	goString := C.GoString(s) // Copy input to Go memory space.
+	var goString string = C.GoString(s) // Copy input to Go memory space.
 	result := ""
 	for i := int64(0); i < n; i++ {
 		result += goString
@@ -117,7 +117,8 @@ repeat = lib.repeat
 repeat.argtypes = [ctypes.c_char_p, ctypes.c_longlong]
 repeat.restype = ctypes.c_char_p
 
-print('Pizza * 4 =', repeat(b'Pizza', 4).decode())
+result = repeat(b'Pizza', 4)  # type(result) = bytes
+print('Pizza * 4 =', result.decode())
 ```
 
 Run:
