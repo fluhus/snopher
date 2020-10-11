@@ -144,19 +144,19 @@ the overhead of converting values to and from their C representation.
 
 Tested on my personal desktop: Intel i5-6600K, 16GB RAM, Windows 10, Python 3.7.6, Go 1.14.
 
-### Pi
+#### Pi
 
 A simple comparison calculating the number Pi, to get a feeling of how much faster Go can be.
 
 ![pi](https://raw.githubusercontent.com/fluhus/snopher/master/pi.png)
 
-### Random Permutation
+#### Random Permutation
 
 Comparing a more complex procedure. Notice how using Go can be faster than Python's builtins.
 
 ![shuffle](https://raw.githubusercontent.com/fluhus/snopher/master/shuffle.png)
 
-### Using `array` for Conversion
+#### Using `array` for Conversion
 
 Comparing using the constructor recommended by the `ctypes` package documentation, to using
 `array` for converting Python values to C values.
