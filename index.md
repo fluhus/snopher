@@ -109,6 +109,57 @@ Limitations:
 
 * If you **CONTINUE**
 
+# Arrays and Slices
+
+normalize.go:
+
+```go
+// Returns the input numbers minus their mean.
+//
+//export normalize
+func normalize(numsPtr *float64, n int64, outPtr *float64) {
+	// The way to wrap a pointer with a Go slice.
+	nums := (*[1 << 30]float64)(unsafe.Pointer(numsPtr))[:n:n]
+	out := (*[1 << 30]float64)(unsafe.Pointer(outPtr))[:n:n]
+
+	// Calculate mean.
+	mean := 0.0
+	for _, num := range nums {
+		mean += num
+	}
+	mean /= float64(n)
+
+	// Assign output.
+	for i := range nums {
+		out[i] = nums[i] - mean
+	}
+}
+```
+
+normalize.py:
+
+```python
+lib = ctypes.CDLL('./normalize.dll')
+normalize = lib.normalize
+
+normalize.argtypes = [
+    ctypes.POINTER(ctypes.c_double),
+    ctypes.c_longlong,
+    ctypes.POINTER(ctypes.c_double),
+]
+
+# Building buffers from arrays is more efficient than
+# (ctypes.c_double * 3)(*[1, 2, 3])
+nums = array('d', [1, 2, 3])
+nums_ptr = (ctypes.c_double * len(nums)).from_buffer(nums)
+out = array('d', (0 for _ in range(len(nums))))
+out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
+
+normalize(nums_ptr, len(nums), out_ptr)
+print('nums:', list(nums))
+print('out:', list(out))
+```
+
 # Strings
 
 TODO: Mention separate memory spaces.
@@ -164,8 +215,6 @@ Badger * 4 = BadgerBadgerBadgerBadger
 Snake * 5 = SnakeSnakeSnakeSnakeSnake
 >
 ```
-
-# Arrays and Slices
 
 # Structs
 
