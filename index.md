@@ -117,13 +117,17 @@ repeat.go:
 
 ```go
 //export repeat
-func repeat(s *C.char, n int64) *C.char {
+func repeat(s *C.char, n int64, out *C.char, outN int64) *C.char {
+	// Create a Go buffer around output buffer.
+	outBytes := (*[1 << 30]byte)(unsafe.Pointer(out))[:0:outN]
+	buf := bytes.NewBuffer(outBytes)
+
 	var goString string = C.GoString(s) // Copy input to Go memory space.
-	result := ""
 	for i := int64(0); i < n; i++ {
-		result += goString
+		buf.WriteString(goString)
 	}
-	return C.CString(result) // Copy result to C memory space.
+	buf.WriteByte(0) // Null terminator, important!
+	return out
 }
 ```
 
@@ -133,18 +137,31 @@ repeat.py:
 lib = ctypes.CDLL('./repeat.dll')
 repeat = lib.repeat
 
-repeat.argtypes = [ctypes.c_char_p, ctypes.c_longlong]
+repeat.argtypes = [
+    ctypes.c_char_p,
+    ctypes.c_longlong,
+    ctypes.c_char_p,
+    ctypes.c_longlong,
+]
 repeat.restype = ctypes.c_char_p
 
-result = repeat(b'Pizza', 4)  # type(result) = bytes
-print('Pizza * 4 =', result.decode())
+# Reusable output buffer.
+buf_size = 1000
+buf = (ctypes.c_char * buf_size)(*([0] * buf_size))
+
+result = repeat(b'Badger', 4, buf, buf_size)  # type(result) = bytes
+print('Badger * 4 =', result.decode())
+
+result = repeat(b'Snake', 5, buf, buf_size)
+print('Snake * 5 =', result.decode())
 ```
 
 Run:
 
 ```
 > python repeat.py
-Pizza * 4 = PizzaPizzaPizzaPizza
+Badger * 4 = BadgerBadgerBadgerBadger
+Snake * 5 = SnakeSnakeSnakeSnakeSnake
 >
 ```
 
