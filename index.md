@@ -52,11 +52,18 @@ Hello world!
 >
 ```
 
-TODO: Add notes.
+Congrats!
+
+Now let's break it down:
+
+1. The Go code uses its regular logic, but exports its function for external
+   use, with the `//export` directive.
+2. Building with `-buildmode=c-shared` creates a C-style shared library.
+3. Python loads the shared library and accesses the exported function.
 
 # Primitive Input and Output
 
-TODO: Point out type mapping in .h file and architecture safety. Mention error handling.
+Let's start with an example.
 
 add.go:
 
@@ -88,7 +95,19 @@ Run:
 >
 ```
 
-TODO: Discuss argtypes and restype.
+To pass input and receive output to/from a Go function, we need to use ctypes's
+`argtypes` and `restype` attributes. They do 2 things:
+
+1. `argtypes` guards the function by checking the arguments before calling the
+   library code.
+2. Using these attributes tells Python how to convert the input Python values
+   to ctypes values, and how to convert the output back to a Python value.
+
+You can find the mapping between C types and Go types in the generated `.h`
+file after you compile your Go code with `-buildmode=c-shared`.
+
+**DANGER: Some types change sizes on different architectures. It is generally
+safer to use sized types (`int64`) here than unsized types (`int`).**
 
 # Memory Spaces
 
