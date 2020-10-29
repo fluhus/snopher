@@ -117,7 +117,7 @@ normalize.go:
 // Returns the input numbers minus their mean.
 //
 //export normalize
-func normalize(numsPtr *float64, n int64, outPtr *float64) {
+func normalize(numsPtr *float64, outPtr *float64, n int64) {
 	// The way to wrap a pointer with a Go slice.
 	nums := (*[1 << 30]float64)(unsafe.Pointer(numsPtr))[:n:n]
 	out := (*[1 << 30]float64)(unsafe.Pointer(outPtr))[:n:n]
@@ -144,8 +144,8 @@ normalize = lib.normalize
 
 normalize.argtypes = [
     ctypes.POINTER(ctypes.c_double),
-    ctypes.c_longlong,
     ctypes.POINTER(ctypes.c_double),
+    ctypes.c_longlong,
 ]
 
 # Building buffers from arrays is more efficient than
@@ -155,9 +155,18 @@ nums_ptr = (ctypes.c_double * len(nums)).from_buffer(nums)
 out = array('d', (0 for _ in range(len(nums))))
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
-normalize(nums_ptr, len(nums), out_ptr)
+normalize(nums_ptr, out_ptr, len(nums))
 print('nums:', list(nums))
 print('out:', list(out))
+```
+
+Run:
+
+```
+> python normalize.py
+nums: [1.0, 2.0, 3.0]
+out: [-1.0, 0.0, 1.0]
+>
 ```
 
 # Strings
