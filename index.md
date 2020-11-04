@@ -1,5 +1,7 @@
 A tutorial and cheatsheet on calling Go code from Python using the ctypes library.
 
+**UNDER CONSTRUCTION**
+
 # Introduction
 
 TODO: Add requirements, caveats.
@@ -62,6 +64,8 @@ Now let's break it down:
 3. Python loads the shared library and accesses the exported function.
 
 # Primitive Input and Output
+
+Here we introduce some basic arguments and return values.
 
 Let's start with an example.
 
@@ -130,6 +134,12 @@ Limitations:
 
 # Arrays and Slices
 
+We are now entering the dangerous zone of unsafe buffer allocations. While
+python is generally memory safe, working with raw pointers might end up in
+segmentation faults and memory leaks.
+
+**Make sure to read this section through in order to avoid bad things.**
+
 normalize.go:
 
 ```go
@@ -187,6 +197,33 @@ nums: [1.0, 2.0, 3.0]
 out: [-1.0, 0.0, 1.0]
 >
 ```
+
+In order to work with lists we need to convert them into C arrays. The way to
+do it is to create an array using `(ctypes.my_type * my_length)(1, 2, 3 ...)`.
+The faster way to do it is to use the `array` library as demonstrated above.
+See the benchmarks section for more info about their performance.
+
+In Go you can cast the C-like pointer to a slice (that still points to Python's
+memory), see the demonstration above. This way you can utilize Go's syntax while
+working with Python buffers.
+
+Output lists are the tricky part. You cannot return a Go pointer when using CGo,
+that will result in an error. Instead you can allocate a C pointer from Go using
+`C.malloc()` and return that. However, that pointer is not garbage-collected
+so unless you implement a way to deallocate them, you will have a memory leak.
+
+The possibly safest way to go about output arrays is to pre-allocate them in
+Python and pass them as arguments to the function. Notice that you need to keep
+their references in your python code until you are done running Go code on them,
+to keep them from getting garbage-collected.
+
+#### Summary of Dangers
+
+* Returning Go pointers to Python. **Error.**
+* Returning C pointers from Go to Python. **Possible memory leak.**
+* Losing the `ctypes` reference while Go code is still running (like when taking
+  `ctypes.addressof` and dumping the pointer object). **Possible segmentation
+  fault.**
 
 # Strings
 
