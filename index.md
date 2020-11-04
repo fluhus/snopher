@@ -113,25 +113,6 @@ file after you compile your Go code with `-buildmode=c-shared`.
 **DANGER: Some types change sizes on different architectures. It is generally
 safer to use sized types (`int64`) here than unsized types (`int`).**
 
-# Memory Spaces
-
-**THIS SECTION IS IMPORTANT**
-
-It is important to understand how memory spaces work in order to make efficient use
-of Python and Go together.
-
-In our case we have 3 memory spaces:
-
-* **Python memory:** memory allocated by Python
-* **Go memory:** memory allocated by Go's regular allocations
-* **C memory:** memory allocated by Go using the "C" package
-
-#### Python Memory
-
-Limitations:
-
-* If you **CONTINUE**
-
 # Arrays and Slices
 
 We are now entering the dangerous zone of unsafe buffer allocations. While
