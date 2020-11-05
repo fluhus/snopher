@@ -191,7 +191,7 @@ working with Python buffers.
 Output lists are the tricky part. You cannot return a Go pointer when using CGo,
 that will result in an error. Instead you can allocate a C pointer from Go using
 `C.malloc()` and return that. However, that pointer is not garbage-collected
-so unless you implement a way to deallocate them, you will have a memory leak.
+so unless you implement a way to deallocate those, you will have a memory leak.
 
 The possibly safest way to go about output arrays is to pre-allocate them in
 Python and pass them as arguments to the function. Notice that you need to keep
@@ -201,7 +201,8 @@ to keep them from getting garbage-collected.
 #### Summary of Dangers
 
 * Returning Go pointers to Python. **Error.**
-* Returning C pointers from Go to Python. **Possible memory leak.**
+* Returning C pointers from Go to Python without explicit deallocation.
+  **Memory leak.**
 * Losing the `ctypes` reference while Go code is still running (like when taking
   `ctypes.addressof` and dumping the pointer object). **Possible segmentation
   fault.**
@@ -209,6 +210,7 @@ to keep them from getting garbage-collected.
 # Strings
 
 TODO: Mention separate memory spaces.
+Mention null terminator.
 
 repeat.go:
 
@@ -267,6 +269,12 @@ Snake * 5 = SnakeSnakeSnakeSnakeSnake
 ## Multiple Return Values
 
 ## Strings and Slices
+
+# Performance Tips
+
+Mention reusing buffers
+
+Mention using `array`
 
 # Benchmarks
 
