@@ -209,8 +209,9 @@ to keep them from getting garbage-collected.
 
 # Strings
 
-TODO: Mention separate memory spaces.
-Mention null terminator.
+Strings work pretty much like arrays in terms of memory management, so
+everything related to arrays applies here too. Below I discuss some convenience
+techniques and some pitfalls.
 
 repeat.go:
 
@@ -263,6 +264,37 @@ Badger * 4 = BadgerBadgerBadgerBadger
 Snake * 5 = SnakeSnakeSnakeSnakeSnake
 >
 ```
+
+Strings are passed by converting a Python string to a bytes object (typically
+by calling `encode()`), then to a C-pointer and then to a Go-string.
+
+Using `ctypes.c_char_p` in argtypes makes Python expect a bytes object and
+convert it to a C `*char`. In restype, it converts the returned `*char` to a
+bytes object.
+
+In Go you can convert a `*char` to a Go string using `C.GoString`. This copies
+the data and creates a new string managed by Go in terms of garbage collection.
+
+To create a `*char` as a return value, you can call `C.CString`. However, the
+pointer gets lost unless you keep a reference to it in Go, and then you have a
+memory leak.
+
+My recommended way to return a string is to create an output buffer in Python
+(possibly reusable), pass it to Go and then wrap it in a `bytes.Buffer`. That
+should make generating the output string safe and efficient. Don't forget the
+null terminator!
+
+Go can return the given output pointer, and Python will automatically make a
+bytes object out of it. See the demonstration above.
+
+#### Summary of Dangers
+
+* Returning a `C.CString` without keeping the reference for future deallocation.
+  **Memory leak.**
+* Not appending a null terminator at the end of the output string.
+  **Buffer overflow when converting to Python object.**
+* Not checking output buffer size in Go. **Buffer overflow or truncated
+  output.**
 
 # Structs
 
