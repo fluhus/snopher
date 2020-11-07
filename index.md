@@ -56,18 +56,17 @@ Hello world!
 
 Congrats!
 
-Now let's break it down:
+Let's break it down:
 
 1. The Go code uses its regular logic, but exports its function for external
-   use, with the `//export` directive.
+   use with the `//export` directive.
 2. Building with `-buildmode=c-shared` creates a C-style shared library.
 3. Python loads the shared library and accesses the exported function.
 
 # Primitive Input and Output
 
-Here we introduce some basic arguments and return values.
-
-Let's start with an example.
+Here we introduce some basic arguments and return values. Let's start with an
+example.
 
 add.go:
 
@@ -115,9 +114,9 @@ safer to use sized types (`int64`) here than unsized types (`int`).**
 
 # Arrays and Slices
 
-We are now entering the dangerous zone of unsafe buffer allocations. While
+We are now entering the dangerous zone of unprotected memory access. While
 python is generally memory safe, working with raw pointers might end up in
-segmentation faults and memory leaks.
+buffer overflows and memory leaks.
 
 **Make sure to read this section through in order to avoid bad things.**
 
@@ -218,7 +217,7 @@ repeat.go:
 ```go
 //export repeat
 func repeat(s *C.char, n int64, out *C.char, outN int64) *C.char {
-	// Create a Go buffer around output buffer.
+	// Create a Go buffer around the output buffer.
 	outBytes := (*[1 << 30]byte)(unsafe.Pointer(out))[:0:outN]
 	buf := bytes.NewBuffer(outBytes)
 
@@ -295,6 +294,8 @@ bytes object out of it. See the demonstration above.
   **Buffer overflow when converting to Python object.**
 * Not checking output buffer size in Go. **Buffer overflow or truncated
   output.**
+
+# Numpy and Pandas
 
 # Structs
 
