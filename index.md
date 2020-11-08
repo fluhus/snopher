@@ -58,7 +58,7 @@ Congrats!
 
 Let's break it down:
 
-1. The Go code uses its regular logic, but exports its function for external
+1. The Go code uses regular Go logic, but exports its function for external
    use with the `//export` directive.
 2. Building with `-buildmode=c-shared` creates a C-style shared library.
 3. Python loads the shared library and accesses the exported function.
@@ -115,8 +115,8 @@ safer to use sized types (`int64`) here than unsized types (`int`).**
 # Arrays and Slices
 
 We are now entering the dangerous zone of unprotected memory access. While
-python is generally memory safe, working with raw pointers might end up in
-buffer overflows and memory leaks.
+Python and Go are generally memory safe, working with raw pointers might end
+up in buffer overflows and memory leaks.
 
 **Make sure to read this section through in order to avoid bad things.**
 
