@@ -1,6 +1,13 @@
-A tutorial and cheatsheet on calling Go code from Python using the ctypes library.
-
 **UNDER CONSTRUCTION**
+
+This is a tutorial and cheatsheet on calling Go code from Python using the
+ctypes library.
+
+It is based on my personal experience that I accumulated while working on my
+research projects. It may contain errors or suboptimal practices. Feedback and
+ideas are welcome!
+
+Snake + Gopher = <3
 
 # Introduction
 
