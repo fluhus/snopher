@@ -297,6 +297,75 @@ bytes object out of it. See the demonstration above.
 
 # Numpy and Pandas
 
+Numpy provides access to its underlying buffers using the
+`.ctypes.data_as(ctypes.whatever)` syntax. With pandas you can use the `.values`
+attribute to get the underlying numpy array, and then use numpy's syntax to get
+the actual pointer. This way you can change the array/table in place.
+
+table.go:
+
+```go
+//export increase
+func increase(numsPtr *int64, n int64, a int64) {
+	nums := (*[1 << 30]int64)(unsafe.Pointer(numsPtr))[:n:n]
+	for i := range nums {
+		nums[i] += a
+	}
+}
+```
+
+table.py:
+
+```python
+lib = ctypes.CDLL('./table.dll')
+increase = lib.increase
+
+increase.argtypes = [
+    ctypes.POINTER(ctypes.c_longlong),
+    ctypes.c_longlong,
+    ctypes.c_longlong,
+]
+
+people = pandas.DataFrame(
+    {
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [20, 30, 40],
+    }
+)
+
+# First we check the type.
+ages = people.age
+if str(ages.dtypes) != 'int64':
+    raise TypeError(f'Expected type int64, got {ages.dtypes}')
+
+values = ages.values  # type=numpy.Array
+ptr = values.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))
+
+print('Before')
+print(people)
+
+print('After')
+increase(ptr, len(people), 5)
+print(people)
+```
+
+Run:
+
+```
+> python table.py
+Before
+      name  age
+0    Alice   20
+1      Bob   30
+2  Charlie   40
+After
+      name  age
+0    Alice   25
+1      Bob   35
+2  Charlie   45
+>
+```
+
 # Structs
 
 ## Multiple Return Values
