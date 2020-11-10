@@ -3,9 +3,8 @@
 This is a tutorial and cheatsheet on calling Go code from Python using the
 ctypes library.
 
-It is based on the experience I accumulated while working on my
-research projects. It may contain suboptimal practices or even errors. Feedback
-and ideas are welcome!
+It is based on my personal experience and might contain suboptimal practices or
+even errors. Feedback and ideas are welcome!
 
 Snake + Gopher = <3
 
