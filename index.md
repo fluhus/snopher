@@ -405,9 +405,80 @@ the copy to Go will not affect the original table.
 
 # Structs
 
+To work with structs, you need to define them both in Python and in C. Exporting
+Go structs is not possible.
+
+person.go
+
+```go
+/*
+struct person {
+  char* firstName;
+  char* lastName;
+  char* fullName;
+  long long fullNameLen;
+};
+*/
+import "C"
+import (
+	"bytes"
+	"unsafe"
+)
+
+//export fill
+func fill(p *C.struct_person) {
+	buf := bytes.NewBuffer(
+		(*[1 << 30]byte)(unsafe.Pointer(p.fullName))[:0:p.fullNameLen])
+	first := C.GoString(p.firstName)
+	last := C.GoString(p.lastName)
+	buf.WriteString(first + " " + last)
+	buf.WriteByte(0)
+}
+```
+
+person.py
+
+```python
+class Person(ctypes.Structure):
+    _fields_ = [
+        ('first_name', ctypes.c_char_p),
+        ('last_name', ctypes.c_char_p),
+        ('full_name', ctypes.c_char_p),
+        ('full_name_len', ctypes.c_longlong),
+    ]
+
+
+lib = ctypes.CDLL('./person.dll')
+
+fill = lib.fill
+fill.argtypes = [ctypes.POINTER(Person)]
+
+buf_size = 1000
+buf = ctypes.create_string_buffer(buf_size)
+person = Person(b'John', b'Galt', buf.value, len(buf))
+fill(ctypes.pointer(person))
+
+print(person.full_name)
+```
+
+Since we cannot export Go structs, we define them in C by adding a comment
+above the `import "C"` line. Notice that in Go the struct `person` is referred
+to as `C.struct_person`. In Python we define an equivalent `ctypes.Structure`
+class that has exactly the same fields.
+
+When it comes to populating struct fields in Go, primitives are quite
+straightforward. When it comes to arrays and strings, the same limitations as
+before apply. To populate a field of type `ctypes.c_char_p` (string), you can
+allocate a buffer using `ctypes.create_string_buffer` which gives a
+`ctypes.c_char` array, then use its `.value` attribute to get the bytes pointer.
+
 ## Multiple Return Values
 
-## Strings and Slices
+TODO
+
+## Go Strings and Go Slices
+
+TODO
 
 # Performance Tips
 
