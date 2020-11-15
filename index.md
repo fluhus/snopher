@@ -28,7 +28,7 @@ them on Python 2 but they might work.
 
 There are other ways to cross-call Go from Python, such as
 [extension modules][cext] and [SWIG][swig]. Each has its own pros and cons. I
-chose ctypes because it seems to me like the easiest one.
+chose ctypes because it seems to me like the easiest option.
 
 [cext]: https://docs.python.org/3/extending/extending.html
 [swig]: http://swig.org/
@@ -392,6 +392,16 @@ After
 2  Charlie   45
 >
 ```
+
+It is important to check the type of the array before passing it to your Go
+function. Go asserts the data is of a certain type, and that might not be true.
+The data may be of a different numeric type (int<-->float), a different size
+(int64<-->int32), or of type object.
+
+Another thing to keep in mind is that Pandas copies tables when selecting rows.
+For example, if we have a DataFrame called `people`, then
+`people[people['age'] < 40]` will return a copy of `people`. Therefore passing
+the copy to Go will not affect the original table.
 
 # Structs
 
