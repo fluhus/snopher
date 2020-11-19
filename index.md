@@ -1,12 +1,7 @@
-**UNDER CONSTRUCTION**
-
-> Snake + Gopher = <3
+Snake + Gopher = <3
 
 This is a tutorial and cheatsheet on calling Go code from Python using the
 ctypes library.
-
-It is based on my own experience and might contain suboptimal practices or
-even errors. Feedback and ideas are welcome!
 
 Author: Amit Lavon
 
@@ -19,19 +14,22 @@ that because it is fast, simple and cross platform.
 This tutorial started as a cheatsheet I wrote for myself. In my research I work
 mostly in python. However, since I work on large amounts of data, I needed a
 heavy-duty language for some of my more demanding analysis tasks. That's when I
-started exploring the possibility of exporting parts of my analysis pipelines to
+started exploring the possibility of exporting parts of my analysis routines to
 Go.
 
 In order to implement the advice shown here you will need a Python interpreter
 and a Go compiler. I wrote the examples here using Python 3. I haven't tested
 them on Python 2 but they might work.
 
-There are other ways to cross-call Go from Python, such as
+There exist other ways to cross-call Go from Python, such as
 [extension modules][cext] and [SWIG][swig]. Each has its own pros and cons. I
-chose ctypes because it seems to me like the easiest option.
+chose ctypes because it seemed to me like the easiest option.
 
 [cext]: https://docs.python.org/3/extending/extending.html
 [swig]: http://swig.org/
+
+**This tutorial is based on my own experience, so it might contain suboptimal
+practices or even mistakes. Your feedback and ideas are welcome!**
 
 # Hello World
 
@@ -474,11 +472,11 @@ allocate a buffer using `ctypes.create_string_buffer` which gives a
 
 ## Multiple Return Values
 
-TODO
+**UNDER CONSTRUCTION**
 
 ## Go Strings and Go Slices
 
-TODO
+**UNDER CONSTRUCTION**
 
 # Performance Tips
 
