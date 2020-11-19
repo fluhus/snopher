@@ -1,9 +1,7 @@
-Snake + Gopher = <3
-
 This is a tutorial and cheatsheet on calling Go code from Python using the
-ctypes library.
+ctypes library. Snake + Gopher = <3.
 
-Author: Amit Lavon
+By Amit Lavon
 
 # Introduction
 
