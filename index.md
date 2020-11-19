@@ -482,9 +482,48 @@ TODO
 
 # Performance Tips
 
-Mention reusing buffers
+#### Reuse Buffers
 
-Mention using `array`
+For calls that repeat many times, if it make sense to, try to allocate your
+ctypes buffers once and reuse them across repeating calls.
+
+A convenient trick is to allocate the buffer in a function's closure.
+It has 2 advantages:
+
+1. Design: you can keep the buffering abstract from users of the function (no
+   need to pass the buffer around).
+2. Memory management: creating the closure function within a local scope (not
+   as a global) allows it to get garbage-collected along with its buffer when
+   no longer needed.
+
+For example:
+
+```python
+# The ctypes wrapper for my Go function.
+my_function = my_lib.my_function
+
+
+def my_function_with_buffer(n: int):
+    buffer = (ctypes.c_char * n)(*([0] * n))
+    def my_function_with_closure():
+        my_function(buffer, n)
+    return my_function_with_closure
+
+
+def main():
+    my_function_buffered = my_function_with_buffer(1000)
+    my_function_buffered()
+    my_function_buffered()
+    my_function_buffered()
+    # When the function exits, my_function_buffered is released along with
+    # its buffer.
+```
+
+#### Use the `array` Library to Allocate Arrays / Buffers
+
+As mentioned above (and below under Benchmarks), using the `array` library to
+allocate buffers is faster than the regular constructor of a
+`(ctypes.type * n)` value.
 
 # Benchmarks
 
