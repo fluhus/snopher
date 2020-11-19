@@ -506,7 +506,7 @@ def my_function_with_buffer(n: int):
     return my_function_with_closure
 
 
-def main():
+def work_work():
     my_function_buffered = my_function_with_buffer(1000)
     my_function_buffered()
     my_function_buffered()
