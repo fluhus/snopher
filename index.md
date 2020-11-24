@@ -15,9 +15,9 @@ heavy-duty language for some of my more demanding analysis tasks. That's when I
 started exploring the possibility of exporting parts of my analysis routines to
 Go.
 
-In order to implement the advice shown here you will need a Python interpreter
-and a Go compiler. I wrote the examples here using Python 3. I haven't tested
-them on Python 2 but they might work.
+In order to implement the advice shown here you will need a Python interpreter,
+a Go compiler and GCC (on Windows use MinGW). I wrote the examples
+here using Python 3 but they might work in Python 2 as well.
 
 There exist other ways to cross-call Go from Python, such as
 [extension modules][cext] and [SWIG][swig]. Each has its own pros and cons. I
@@ -484,7 +484,7 @@ For calls that repeat many times, if it make sense to, try to allocate your
 ctypes buffers once and reuse them across repeating calls.
 
 A convenient trick is to allocate the buffer in a function's closure.
-It has 2 advantages:
+It has 2 benefits:
 
 1. Design: you can keep the buffering abstract from users of the function (no
    need to pass the buffer around).
