@@ -1,5 +1,7 @@
 This is a tutorial and cheatsheet on calling Go code from Python using the
-ctypes library. Snake + Gopher = <3.
+ctypes library.
+
+Snake + Gopher = <3.
 
 By Amit Lavon
 
@@ -317,6 +319,36 @@ bytes object out of it. See the demonstration above.
   **Buffer overflow when converting to Python object.**
 * Not checking output buffer size in Go. **Buffer overflow or truncated
   output.**
+
+## Array of Strings
+
+Passing an array of strings can be done with
+[a trick by Stack Overflow user habnabit][so].
+
+[so]: https://stackoverflow.com/questions/3494598/passing-a-list-of-strings-to-from-python-ctypes-to-c-function-expecting-char
+
+join.go:
+
+```go
+func goStrings(cstrs **C.char) []string {
+	var result []string
+	slice := (*[1 << 30]*C.char)(unsafe.Pointer(cstrs))[: 1<<30 : 1<<30]
+	for i := 0; slice[i] != nil; i++ {
+		result = append(result, C.GoString(slice[i]))
+	}
+	return result
+}
+```
+
+join.py:
+
+```python
+def to_c_str_array(strs: List[str]):
+    ptr = (ctypes.c_char_p * (len(strs) + 1))()
+    ptr[:-1] = [s.encode() for s in strs]
+    ptr[-1] = None  # Terminate with null.
+    return ptr
+```
 
 # Numpy and Pandas
 
