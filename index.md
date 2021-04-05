@@ -3,7 +3,7 @@ ctypes library.
 
 Snake + Gopher = <3.
 
-By Amit Lavon
+By Amit Lavon.
 
 # Introduction
 
@@ -139,11 +139,11 @@ safer to use sized types (`int64`) here than unsized types (`int`).**
 
 # Arrays and Slices
 
-We are now entering the dangerous zone of unprotected memory access. While
-Python and Go are generally memory safe, working with raw pointers might end
+We are now entering the zone of unprotected memory access. While
+Python and Go are generally memory safe, working with raw pointers could end
 up in buffer overflows and memory leaks.
 
-**Make sure to read this section through in order to avoid bad things.**
+**Make sure to read this section through to learn how to handle pointers safely.**
 
 normalize.go:
 
@@ -323,7 +323,7 @@ bytes object out of it. See the demonstration above.
 ## Array of Strings
 
 Passing an array of strings can be done with
-[a trick by Stack Overflow user habnabit][so].
+[a snippet by Stack Overflow user habnabit][so].
 
 [so]: https://stackoverflow.com/questions/3494598/passing-a-list-of-strings-to-from-python-ctypes-to-c-function-expecting-char
 
@@ -496,9 +496,11 @@ class that has exactly the same fields.
 
 When it comes to populating struct fields in Go, primitives are quite
 straightforward. When it comes to arrays and strings, the same limitations as
-before apply. To populate a field of type `ctypes.c_char_p` (string), you can
-allocate a buffer using `ctypes.create_string_buffer` which gives a
-`ctypes.c_char` array, then use its `.value` attribute to get the bytes pointer.
+before apply.
+
+## Automating Memory Management Using `__del__`
+
+**UNDER CONSTRUCTION**
 
 ## Multiple Return Values
 
