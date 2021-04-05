@@ -1,6 +1,3 @@
 # Build products.
 *.h
 *.dll
-
-# Local build script.
-build.bat
