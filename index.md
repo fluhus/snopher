@@ -17,13 +17,13 @@ heavy-duty language for some of my more demanding analysis tasks. That's when I
 started exploring the possibility of exporting parts of my analysis routines to
 Go.
 
-In order to implement the advice shown here you will need a Python interpreter,
+In order to implement the advice shown here, you will need a Python interpreter,
 a Go compiler and GCC (on Windows use MinGW). I wrote the examples
 here using Python 3 but they might work in Python 2 as well.
 
 There exist other ways to cross-call Go from Python, such as
 [extension modules][cext] and [SWIG][swig]. Each has its own pros and cons. I
-chose ctypes because it seemed to me like the easiest option.
+chose ctypes because it has no additional dependencies and is easy to learn.
 
 [cext]: https://docs.python.org/3/extending/extending.html
 [swig]: http://swig.org/
@@ -298,18 +298,17 @@ bytes object.
 
 In Go you can convert a `*char` to a Go string using `C.GoString`. This copies
 the data and creates a new string managed by Go in terms of garbage collection.
-
 To create a `*char` as a return value, you can call `C.CString`. However, the
 pointer gets lost unless you keep a reference to it in Go, and then you have a
 memory leak.
 
-My recommended way to return a string is to create an output buffer in Python
-(possibly reusable), pass it to Go and then wrap it in a `bytes.Buffer`. That
-should make generating the output string safe and efficient. Don't forget the
-null terminator!
+My recommended way to return a string is to either create an output buffer in
+Python (possibly reusable), pass it to Go and then wrap it in a `bytes.Buffer`;
+or to create the output c-string in Go and wrap it in a self-finalizing struct
+(see structs section).
 
-Go can return the given output pointer, and Python will automatically make a
-bytes object out of it. See the demonstration above.
+If the output pointer was given by Python, Go can return it and Python will
+automatically make a bytes object out of it. See the demonstration above.
 
 #### Summary of Dangers
 
