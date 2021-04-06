@@ -144,38 +144,30 @@ up in buffer overflows and memory leaks.
 
 **Make sure to read this section through to learn how to handle pointers safely.**
 
-normalize.go:
+squares.go:
 
 ```go
-// Returns the input numbers minus their mean.
+// Returns the squares of the input numbers.
 //
-//export normalize
-func normalize(numsPtr *float64, outPtr *float64, n int64) {
+//export squares
+func squares(numsPtr *float64, outPtr *float64, n int64) {
 	// The way to wrap a pointer with a Go slice.
 	nums := (*[1 << 30]float64)(unsafe.Pointer(numsPtr))[:n:n]
 	out := (*[1 << 30]float64)(unsafe.Pointer(outPtr))[:n:n]
 
-	// Calculate mean.
-	mean := 0.0
-	for _, num := range nums {
-		mean += num
-	}
-	mean /= float64(n)
-
-	// Assign output.
-	for i := range nums {
-		out[i] = nums[i] - mean
+	for i, x := range nums {
+		out[i] = x * x
 	}
 }
 ```
 
-normalize.py:
+squares.py:
 
 ```python
-lib = ctypes.CDLL('./normalize.dll')
-normalize = lib.normalize
+lib = ctypes.CDLL('./squares.dll')
+squares = lib.squares
 
-normalize.argtypes = [
+squares.argtypes = [
     ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double),
     ctypes.c_longlong,
@@ -188,7 +180,7 @@ nums_ptr = (ctypes.c_double * len(nums)).from_buffer(nums)
 out = array('d', (0 for _ in range(len(nums))))
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
-normalize(nums_ptr, out_ptr, len(nums))
+squares(nums_ptr, out_ptr, len(nums))
 print('nums:', list(nums))
 print('out:', list(out))
 ```
@@ -196,9 +188,9 @@ print('out:', list(out))
 Run:
 
 ```
-> python normalize.py
+> python squares.py
 nums: [1.0, 2.0, 3.0]
-out: [-1.0, 0.0, 1.0]
+out: [1.0, 4.0, 9.0]
 >
 ```
 
@@ -605,10 +597,6 @@ Did I remember to free my memory?
 ```
 
 ## Multiple Return Values
-
-**UNDER CONSTRUCTION**
-
-## Go Strings and Go Slices
 
 **UNDER CONSTRUCTION**
 

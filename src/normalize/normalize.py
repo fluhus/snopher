@@ -1,10 +1,10 @@
 from array import array
 import ctypes
 
-lib = ctypes.CDLL('./normalize.dll')
-normalize = lib.normalize
+lib = ctypes.CDLL('./squares.dll')
+squares = lib.squares
 
-normalize.argtypes = [
+squares.argtypes = [
     ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double),
     ctypes.c_longlong,
@@ -17,6 +17,6 @@ nums_ptr = (ctypes.c_double * len(nums)).from_buffer(nums)
 out = array('d', (0 for _ in range(len(nums))))
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
-normalize(nums_ptr, out_ptr, len(nums))
+squares(nums_ptr, out_ptr, len(nums))
 print('nums:', list(nums))
 print('out:', list(out))
