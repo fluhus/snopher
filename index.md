@@ -217,10 +217,9 @@ that will result in an error. Instead you can allocate a C pointer from Go using
 `C.malloc()` and return that. However, that pointer is not garbage-collected
 so unless you implement a way to deallocate those, you will have a memory leak.
 
-The possibly safest way to go about output arrays is to pre-allocate them in
-Python and pass them as arguments to the function. Notice that you need to keep
-their references in your python code until you are done running Go code on them,
-to keep them from getting garbage-collected.
+My recommendation for safely returning arrays from Go is to either pre-allocate
+them in Python and pass them as arguments to Go, or to generate the arrays in
+Go and wrap them in a safe-finalizing struct (see structs section).
 
 #### Summary of Dangers
 
@@ -299,13 +298,8 @@ bytes object.
 In Go you can convert a `*char` to a Go string using `C.GoString`. This copies
 the data and creates a new string managed by Go in terms of garbage collection.
 To create a `*char` as a return value, you can call `C.CString`. However, the
-pointer gets lost unless you keep a reference to it in Go, and then you have a
-memory leak.
-
-My recommended way to return a string is to either create an output buffer in
-Python (possibly reusable), pass it to Go and then wrap it in a `bytes.Buffer`;
-or to create the output c-string in Go and wrap it in a self-finalizing struct
-(see structs section).
+pointer gets lost unless you keep a reference to it, and then you have a
+memory leak. To return strings from Go, use the same practices as with arrays.
 
 If the output pointer was given by Python, Go can return it and Python will
 automatically make a bytes object out of it. See the demonstration above.
@@ -500,7 +494,7 @@ before apply.
 ## Automating Memory Management Using `__del__`
 
 Setting up a convenient and safe memory management scheme is the last
-piece in our puzzle. Using [Python's finalizers (`__del__`)][del], we can
+piece in our puzzle. Using [Python finalizers (`__del__`)][del], we can
 conveniently allocate buffers in (C)Go, and have Python free them when the
 object is discarded.
 
