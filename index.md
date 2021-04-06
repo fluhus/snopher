@@ -500,7 +500,116 @@ before apply.
 
 ## Automating Memory Management Using `__del__`
 
-**UNDER CONSTRUCTION**
+Setting up a convenient and safe memory management scheme is the last
+piece in our puzzle. Using [Python's finalizers (`__del__`)][del], we can
+conveniently allocate buffers in (C)Go, and have Python free them when the
+object is discarded.
+
+This scheme is simple and requires two things: a finalizer function in Go that
+will deallocate an object's buffers, and a finalizer in Python that will call
+the Go finalizer.
+
+[del]: https://docs.python.org/3/reference/datamodel.html#object.__del__
+
+user.go
+
+```go
+/*
+#include <stdlib.h>
+struct userInfo {
+  char* name;
+  char* description;
+  long long nameLength;
+};
+*/
+import "C"
+import (
+	"fmt"
+	"unsafe"
+)
+
+// Generates a data object for Python.
+//
+//export getUserInfo
+func getUserInfo(cname *C.char) C.struct_userInfo {
+	var result C.struct_userInfo
+	name := C.GoString(cname)
+	// Create a copy to give it the same lifetime as the rest of the object.
+	result.name = C.CString(name)
+	result.description = C.CString(
+		fmt.Sprintf("User %q has %v letters in their name",
+			name, len(name)))
+	result.nameLength = C.longlong(len(name))
+	return result
+}
+
+// Deallocates a data object.
+//
+//export delUserInfo
+func delUserInfo(info C.struct_userInfo) {
+	fmt.Printf("Freeing user %q\n", C.GoString(info.name))
+	C.free(unsafe.Pointer(info.name))
+	C.free(unsafe.Pointer(info.description))
+}
+```
+
+user.py
+
+```python
+class UserInfo(ctypes.Structure):
+    _fields_ = [
+        ('name', ctypes.c_char_p),
+        ('description', ctypes.c_char_p),
+        ('name_length', ctypes.c_longlong),
+    ]
+
+    def __del__(self):
+        del_user_info(self)
+
+
+lib = ctypes.CDLL('user.dll')
+get_user_info = lib.getUserInfo
+get_user_info.argtypes = [ctypes.c_char_p]
+get_user_info.restype = UserInfo
+del_user_info = lib.delUserInfo
+del_user_info.argtypes = [UserInfo]
+
+
+def work_work():
+    user1 = get_user_info('Alice'.encode())
+    print('Name:', user1.name.decode())
+    print('Description:', user1.description.decode())
+    print('Name length:', user1.name_length)
+    print('-----------')
+
+    user2 = get_user_info('Bob'.encode())
+    print('Name:', user2.name.decode())
+    print('Description:', user2.description.decode())
+    print('Name length:', user2.name_length)
+    print('-----------')
+
+    # Now user1 and user2 should get deleted.
+
+
+work_work()
+print('Did I remember to free my memory?')
+```
+
+Run:
+
+```
+Name: Alice
+Description: User "Alice" has 5 letters in their name
+Name length: 5
+-----------
+Name: Bob
+Description: User "Bob" has 3 letters in their name
+Name length: 3
+-----------
+Freeing user "Alice"
+Freeing user "Bob"
+Did I remember to free my memory?
+```
 
 ## Multiple Return Values
 
