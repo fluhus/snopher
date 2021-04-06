@@ -1,2 +1,2 @@
 :: Removes temporary files.
-del *.dll
+del *.dll *.h
