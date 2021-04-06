@@ -14,13 +14,15 @@ heavy-duty language for some of my more demanding analysis tasks. That's when I
 started exploring the possibility of exporting parts of my analysis routines to
 Go.
 
-In order to implement the advice shown here, you will need a Python interpreter,
-a Go compiler and GCC (on Windows use MinGW). I wrote the examples
-here using Python 3 but they might work in Python 2 as well.
+In order to implement the advice shown here you will need Python 3, a Go
+compiler, and GCC (on Windows use MinGW). The code examples are available as
+runnable files on [github][gh].
+
+[gh]: https://www.github.com/fluhus/snopher
 
 There exist other ways to cross-call Go from Python, such as
 [extension modules][cext] and [SWIG][swig]. Each has its own pros and cons. I
-chose ctypes because it has no additional dependencies and is easy to learn.
+chose ctypes because it has no additional dependencies and it is easy to learn.
 
 [cext]: https://docs.python.org/3/extending/extending.html
 [swig]: http://swig.org/
