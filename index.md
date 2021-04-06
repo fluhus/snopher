@@ -505,11 +505,12 @@ piece in our puzzle. Using [Python's finalizers (`__del__`)][del], we can
 conveniently allocate buffers in (C)Go, and have Python free them when the
 object is discarded.
 
+[del]: https://docs.python.org/3/reference/datamodel.html#object.__del__
+
 This scheme is simple and requires two things: a finalizer function in Go that
 will deallocate an object's buffers, and a finalizer in Python that will call
-the Go finalizer.
-
-[del]: https://docs.python.org/3/reference/datamodel.html#object.__del__
+the Go finalizer. The Python finalizer will be called automatically when the
+object's reference count goes to zero.
 
 user.go
 
