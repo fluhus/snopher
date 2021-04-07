@@ -2,4 +2,4 @@
 
 Snake + Gopher = <3
 
-(under construction)
+[View tutorial](https://fluhus.github.io/snopher/)
