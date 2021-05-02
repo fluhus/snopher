@@ -6,6 +6,9 @@ import (
 	"unsafe"
 )
 
+//export noop
+func noop() {}
+
 //export pi
 func pi(n int) float64 {
 	result := 0.0

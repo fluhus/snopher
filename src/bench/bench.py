@@ -1,26 +1,44 @@
+import ctypes
 import random
 import time
-from contextlib import contextmanager
-import ctypes
 from array import array
+from contextlib import contextmanager
+
+
+def humanize_seconds(t):
+    if t < 0.001:
+        return f'{t*1000000:.1f}us'
+    elif t < 1:
+        return f'{t*1000:.1f}ms'
+    else:
+        return f'{t:.1f}s'
 
 
 @contextmanager
-def timer(prefix=None):
+def timer(prefix=None, n=1):
     t = time.monotonic()
     yield
     t = time.monotonic() - t
     if prefix is not None:
         print('{:15}'.format(prefix), end='')
-    if t < 0.001:
-        print('{:.1f}us'.format(t * 1000000))
-    elif t < 1:
-        print('{:.1f}ms'.format(t * 1000))
-    else:
-        print('{:.1f}s'.format(t))
+    print(humanize_seconds(t), end='')
+    if n > 1:
+        print(f' ({humanize_seconds(t/n)} / iteration)', end='')
+    print()
 
 
 lib = ctypes.CDLL('./bench.dll')
+
+
+def benchmark_noop():
+    print('*** No-op ***')
+
+    noop = lib.noop
+    n = 1000000
+
+    with timer('No-op', n=n):
+        for _ in range(n):
+            noop()
 
 
 def benchmark_pi():
@@ -32,11 +50,11 @@ def benchmark_pi():
 
     n = 10000000
 
-    with timer('Go'):
+    with timer('Go', n=n):
         gopy = pi(n)
 
-    with timer('Python'):
-        pypi = sum((-1) ** i * 4 / (i * 2 + 1) for i in range(n))
+    with timer('Python', n=n):
+        pypi = sum((-1)**i * 4 / (i * 2 + 1) for i in range(n))
 
     print('Go pi =', gopy)
     print('Py pi =', pypi)
@@ -109,23 +127,24 @@ def benchmark_dot():
         arr2 = numpy.ndarray([n])
         arr1[:] = 1
         arr2[:] = 1
-    # print(arr1, arr2)
 
-    with timer('Go'):
+    with timer('Go', n=t):
         for _ in range(t):
             p1 = arr1.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
             p2 = arr2.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
             dot(p1, len(arr1), p2, len(arr2))
-    
-    with timer('Numpy'):
+
+    with timer('Numpy', n=t):
         for _ in range(t):
             arr1.dot(arr2)
 
 
-# benchmark_pi()
-# print()
-# benchmark_list_conversion()
-# print()
+benchmark_noop()
+print()
+benchmark_pi()
+print()
+benchmark_list_conversion()
+print()
 benchmark_shuffle()
-# print()
+print()
 benchmark_dot()
