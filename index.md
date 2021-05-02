@@ -606,7 +606,7 @@ Did I remember to free my memory?
 
 The cost of no-op (an empty function call) is a magnitude of 5 us. This is a
 high price to pay per function call, compared to native function calling.
-It turns out that [CGo has a high call overhead](cgo-overhead). My measurements
+It turns out that [CGo has a high call overhead][cgo-overhead]. My measurements
 show that it applies also when calling Go from native C code, whether the Go
 code is linked through a dynamic or a static library.
 
