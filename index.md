@@ -602,6 +602,21 @@ Did I remember to free my memory?
 
 # Performance Tips
 
+#### The Cost of No-op
+
+The cost of no-op (an empty function call) is a magnitude of 5 us. This is a
+high price to pay per function call, compared to native function calling.
+It turns out that [CGo has a high call overhead](cgo-overhead). My measurements
+show that it applies also when calling Go from native C code, whether the Go
+code is linked through a dynamic or a static library.
+
+This overhead should be taken into account when designing an API.
+If each function call has 5 us of Go work, then it is going to spend 50% of its
+time on call overhead. If each function call has 500 us of Go work, then call
+overhead will make about 1%.
+
+[cgo-overhead]: https://stackoverflow.com/questions/28272285/why-cgos-performance-is-so-slow-is-there-something-wrong-with-my-testing-code
+
 #### Reuse Buffers
 
 For calls that repeat many times, if it make sense to, try to allocate your
