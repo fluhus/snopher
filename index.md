@@ -600,6 +600,69 @@ Did I remember to free my memory?
 
 **UNDER CONSTRUCTION**
 
+# Error Handling
+
+Communicating Go errors back to Python is essential for a complete program flow.
+To accomplish that, we will create a reusable error type.
+
+erring.go
+
+```go
+/*
+#include <stdlib.h>
+typedef struct {
+	char* err;
+} error;
+*/
+import "C"
+
+// ...
+
+func newError(s string, args ...interface{}) C.error {
+	if s == "" {
+		// Equivalent to a nil Go error.
+		return C.error{}
+	}
+	msg := fmt.Sprintf(s, args...)
+	return C.error{C.CString(msg)}
+}
+
+//export delError
+func delError(err C.error) {
+	if err.err == nil {
+		return
+	}
+	C.free(unsafe.Pointer(err.err))
+}
+```
+
+erring.py
+
+```python
+class Error(ctypes.Structure):
+    _fields_ = [('err', ctypes.c_char_p)]
+
+    def __del__(self):
+        # We can call del_error with a None err, but this way we can avoid
+        # the call overhead when it's not necessary.
+        if self.err is not None:
+            del_error(self)
+
+    def raise_if_err(self):
+        if self.err is not None:
+            raise IOError(self.err.decode())
+
+
+# ...
+
+del_error = lib.delError
+del_error.argtypes = [Error]
+```
+
+We can use the new error type in structs and functions with multiple return
+values (see the example code files). Note that since Error has its own `__del__`
+function, we can use an Error as a struct field without having to finalize it.
+
 # Performance Tips
 
 #### The Cost of No-op
