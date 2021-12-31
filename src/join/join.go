@@ -9,7 +9,7 @@ import (
 
 func goStrings(cstrs **C.char) []string {
 	var result []string
-	slice := (*[1 << 30]*C.char)(unsafe.Pointer(cstrs))[: 1<<30 : 1<<30]
+	slice := unsafe.Slice(cstrs, 1<<30)
 	for i := 0; slice[i] != nil; i++ {
 		result = append(result, C.GoString(slice[i]))
 	}

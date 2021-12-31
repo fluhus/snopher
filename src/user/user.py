@@ -2,11 +2,7 @@ import ctypes
 
 
 class UserInfo(ctypes.Structure):
-    _fields_ = [
-        ('name', ctypes.c_char_p),
-        ('description', ctypes.c_char_p),
-        ('name_length', ctypes.c_longlong),
-    ]
+    _fields_ = [('info', ctypes.c_char_p)]
 
     def __del__(self):
         del_user_info(self)
@@ -22,15 +18,11 @@ del_user_info.argtypes = [UserInfo]
 
 def work_work():
     user1 = get_user_info('Alice'.encode())
-    print('Name:', user1.name.decode())
-    print('Description:', user1.description.decode())
-    print('Name length:', user1.name_length)
+    print('Info:', user1.info.decode())
     print('-----------')
 
     user2 = get_user_info('Bob'.encode())
-    print('Name:', user2.name.decode())
-    print('Description:', user2.description.decode())
-    print('Name length:', user2.name_length)
+    print('Info:', user2.info.decode())
     print('-----------')
 
     # Now user1 and user2 should get deleted.

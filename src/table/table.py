@@ -11,12 +11,10 @@ increase.argtypes = [
     ctypes.c_longlong,
 ]
 
-people = pandas.DataFrame(
-    {
-        'name': ['Alice', 'Bob', 'Charlie'],
-        'age': [20, 30, 40],
-    }
-)
+people = pandas.DataFrame({
+    'name': ['Alice', 'Bob', 'Charlie'],
+    'age': [20, 30, 40],
+})
 
 # First we check the type.
 ages = people.age
@@ -24,7 +22,7 @@ if str(ages.dtypes) != 'int64':
     raise TypeError(f'Expected type int64, got {ages.dtypes}')
 
 values = ages.values  # type=numpy.Array
-ptr = values.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))
+ptr = values.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
 
 print('Before')
 print(people)

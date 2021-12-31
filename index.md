@@ -151,9 +151,13 @@ up in buffer overflows and memory leaks.
 //
 //export squares
 func squares(numsPtr *float64, outPtr *float64, n int64) {
-	// The way to wrap a pointer with a Go slice.
-	nums := (*[1 << 30]float64)(unsafe.Pointer(numsPtr))[:n:n]
-	out := (*[1 << 30]float64)(unsafe.Pointer(outPtr))[:n:n]
+	// Wrap the pointers with Go slices (pointing to the same data).
+	nums := unsafe.Slice(numsPtr, n)
+	out := unsafe.Slice(outPtr, n)
+
+	// If using Go < 1.17.
+	// nums := (*[1 << 30]float64)(unsafe.Pointer(numsPtr))[:n:n]
+	// out := (*[1 << 30]float64)(unsafe.Pointer(outPtr))[:n:n]
 
 	for i, x := range nums {
 		out[i] = x * x
@@ -177,7 +181,7 @@ squares.argtypes = [
 # (ctypes.c_double * 3)(*[1, 2, 3])
 nums = array('d', [1, 2, 3])
 nums_ptr = (ctypes.c_double * len(nums)).from_buffer(nums)
-out = array('d', (0 for _ in range(len(nums))))
+out = array('d', [0, 0, 0])
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
 squares(nums_ptr, out_ptr, len(nums))
@@ -231,9 +235,9 @@ techniques and some pitfalls.
 
 ```go
 //export repeat
-func repeat(s *C.char, n int64, out *C.char, outN int64) *C.char {
+func repeat(s *C.char, n int64, out *byte, outN int64) *byte {
 	// Create a Go buffer around the output buffer.
-	outBytes := (*[1 << 30]byte)(unsafe.Pointer(out))[:0:outN]
+	outBytes := unsafe.Slice(out, outN)[:0]
 	buf := bytes.NewBuffer(outBytes)
 
 	var goString string = C.GoString(s) // Copy input to Go memory space.
@@ -261,7 +265,7 @@ repeat.restype = ctypes.c_char_p
 
 # Reusable output buffer.
 buf_size = 1000
-buf = (ctypes.c_char * buf_size)(*([0] * buf_size))
+buf = ctypes.create_string_buffer(buf_size)
 
 result = repeat(b'Badger', 4, buf, buf_size)  # type(result) = bytes
 print('Badger * 4 =', result.decode())
@@ -316,7 +320,7 @@ Passing an array of strings can be done with
 ```go
 func goStrings(cstrs **C.char) []string {
 	var result []string
-	slice := (*[1 << 30]*C.char)(unsafe.Pointer(cstrs))[: 1<<30 : 1<<30]
+	slice := unsafe.Slice(cstrs, 1<<30)
 	for i := 0; slice[i] != nil; i++ {
 		result = append(result, C.GoString(slice[i]))
 	}
@@ -346,7 +350,7 @@ the actual pointer. This way you can change the array/table in place.
 ```go
 //export increase
 func increase(numsPtr *int64, n int64, a int64) {
-	nums := (*[1 << 30]int64)(unsafe.Pointer(numsPtr))[:n:n]
+	nums := unsafe.Slice(numsPtr, n)
 	for i := range nums {
 		nums[i] += a
 	}
@@ -365,12 +369,10 @@ increase.argtypes = [
     ctypes.c_longlong,
 ]
 
-people = pandas.DataFrame(
-    {
-        'name': ['Alice', 'Bob', 'Charlie'],
-        'age': [20, 30, 40],
-    }
-)
+people = pandas.DataFrame({
+    'name': ['Alice', 'Bob', 'Charlie'],
+    'age': [20, 30, 40],
+})
 
 # First we check the type.
 ages = people.age
@@ -378,7 +380,7 @@ if str(ages.dtypes) != 'int64':
     raise TypeError(f'Expected type int64, got {ages.dtypes}')
 
 values = ages.values  # type=numpy.Array
-ptr = values.ctypes.data_as(ctypes.POINTER(ctypes.c_longlong))
+ptr = values.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
 
 print('Before')
 print(people)
@@ -439,8 +441,8 @@ import (
 
 //export fill
 func fill(p *C.struct_person) {
-	buf := bytes.NewBuffer(
-		(*[1 << 30]byte)(unsafe.Pointer(p.fullName))[:0:p.fullNameLen])
+	buf := bytes.NewBuffer(unsafe.Slice((*byte)(unsafe.Pointer(p.fullName)),
+		p.fullNameLen)[:0])
 	first := C.GoString(p.firstName)
 	last := C.GoString(p.lastName)
 	buf.WriteString(first + " " + last)
@@ -502,9 +504,7 @@ object's reference count goes to zero.
 /*
 #include <stdlib.h>
 struct userInfo {
-  char* name;
-  char* description;
-  long long nameLength;
+  char* info;
 };
 */
 import "C"
@@ -519,12 +519,9 @@ import (
 func getUserInfo(cname *C.char) C.struct_userInfo {
 	var result C.struct_userInfo
 	name := C.GoString(cname)
-	// Create a copy to give it the same lifetime as the rest of the object.
-	result.name = C.CString(name)
-	result.description = C.CString(
+	result.info = C.CString(
 		fmt.Sprintf("User %q has %v letters in their name",
 			name, len(name)))
-	result.nameLength = C.longlong(len(name))
 	return result
 }
 
@@ -532,9 +529,9 @@ func getUserInfo(cname *C.char) C.struct_userInfo {
 //
 //export delUserInfo
 func delUserInfo(info C.struct_userInfo) {
-	fmt.Printf("Freeing user %q\n", C.GoString(info.name))
-	C.free(unsafe.Pointer(info.name))
-	C.free(unsafe.Pointer(info.description))
+	// This print is only for educational purposes.
+	fmt.Printf("Freeing user info: %s\n", C.GoString(info.info))
+	C.free(unsafe.Pointer(info.info))
 }
 ```
 
@@ -542,11 +539,7 @@ func delUserInfo(info C.struct_userInfo) {
 
 ```python
 class UserInfo(ctypes.Structure):
-    _fields_ = [
-        ('name', ctypes.c_char_p),
-        ('description', ctypes.c_char_p),
-        ('name_length', ctypes.c_longlong),
-    ]
+    _fields_ = [('info', ctypes.c_char_p)]
 
     def __del__(self):
         del_user_info(self)
@@ -562,15 +555,11 @@ del_user_info.argtypes = [UserInfo]
 
 def work_work():
     user1 = get_user_info('Alice'.encode())
-    print('Name:', user1.name.decode())
-    print('Description:', user1.description.decode())
-    print('Name length:', user1.name_length)
+    print('Info:', user1.info.decode())
     print('-----------')
 
     user2 = get_user_info('Bob'.encode())
-    print('Name:', user2.name.decode())
-    print('Description:', user2.description.decode())
-    print('Name length:', user2.name_length)
+    print('Info:', user2.info.decode())
     print('-----------')
 
     # Now user1 and user2 should get deleted.

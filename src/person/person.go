@@ -16,8 +16,8 @@ import (
 
 //export fill
 func fill(p *C.struct_person) {
-	buf := bytes.NewBuffer(
-		(*[1 << 30]byte)(unsafe.Pointer(p.fullName))[:0:p.fullNameLen])
+	buf := bytes.NewBuffer(unsafe.Slice((*byte)(unsafe.Pointer(p.fullName)),
+		p.fullNameLen)[:0])
 	first := C.GoString(p.firstName)
 	last := C.GoString(p.lastName)
 	buf.WriteString(first + " " + last)

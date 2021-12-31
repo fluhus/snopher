@@ -7,9 +7,9 @@ import (
 )
 
 //export repeat
-func repeat(s *C.char, n int64, out *C.char, outN int64) *C.char {
-	// Create a Go buffer around output buffer.
-	outBytes := (*[1 << 30]byte)(unsafe.Pointer(out))[:0:outN]
+func repeat(s *C.char, n int64, out *byte, outN int64) *byte {
+	// Create a Go buffer around the output buffer.
+	outBytes := unsafe.Slice(out, outN)[:0]
 	buf := bytes.NewBuffer(outBytes)
 
 	var goString string = C.GoString(s) // Copy input to Go memory space.
