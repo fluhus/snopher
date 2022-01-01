@@ -2,7 +2,7 @@ import ctypes
 
 import pandas
 
-lib = ctypes.CDLL('./table.dll')
+lib = ctypes.CDLL('./numpypandas.dll')
 increase = lib.increase
 
 increase.argtypes = [

@@ -23,7 +23,7 @@ class EvenResult(ctypes.Structure):
     ]
 
 
-lib = ctypes.CDLL('./erring.dll')
+lib = ctypes.CDLL('./error.dll')
 
 del_error = lib.delError
 del_error.argtypes = [Error]

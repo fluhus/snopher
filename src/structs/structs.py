@@ -10,7 +10,7 @@ class Person(ctypes.Structure):
     ]
 
 
-lib = ctypes.CDLL('./person.dll')
+lib = ctypes.CDLL('./structs.dll')
 
 fill = lib.fill
 fill.argtypes = [ctypes.POINTER(Person)]

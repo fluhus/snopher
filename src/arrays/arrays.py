@@ -1,7 +1,7 @@
 from array import array
 import ctypes
 
-lib = ctypes.CDLL('./squares.dll')
+lib = ctypes.CDLL('./arrays.dll')
 squares = lib.squares
 
 squares.argtypes = [

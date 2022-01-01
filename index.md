@@ -92,7 +92,7 @@ Let's break it down:
 Here we introduce some basic arguments and return values. Let's start with an
 example.
 
-[**add.go**](https://github.com/fluhus/snopher/blob/master/src/add/add.go)
+[**primitive.go**](https://github.com/fluhus/snopher/blob/master/src/primitive/primitive.go)
 
 ```go
 //export add
@@ -101,10 +101,10 @@ func add(a, b int64) int64 {
 }
 ```
 
-[**add.py**](https://github.com/fluhus/snopher/blob/master/src/add/add.py)
+[**primitive.py**](https://github.com/fluhus/snopher/blob/master/src/primitive/primitive.py)
 
 ```python
-lib = ctypes.CDLL('./add.dll')
+lib = ctypes.CDLL('./primitive.dll')
 add = lib.add
 
 # Make python convert its values to C representation.
@@ -144,7 +144,7 @@ up in buffer overflows and memory leaks.
 
 **Make sure to read this section through to learn how to handle pointers safely.**
 
-[**squares.go**](https://github.com/fluhus/snopher/blob/master/src/squares/squares.go)
+[**arrays.go**](https://github.com/fluhus/snopher/blob/master/src/arrays/arrays.go)
 
 ```go
 // Returns the squares of the input numbers.
@@ -165,10 +165,10 @@ func squares(numsPtr *float64, outPtr *float64, n int64) {
 }
 ```
 
-[**squares.py**](https://github.com/fluhus/snopher/blob/master/src/squares/squares.py)
+[**arrays.py**](https://github.com/fluhus/snopher/blob/master/src/arrays/arrays.py)
 
 ```python
-lib = ctypes.CDLL('./squares.dll')
+lib = ctypes.CDLL('./arrays.dll')
 squares = lib.squares
 
 squares.argtypes = [
@@ -231,7 +231,7 @@ Strings work pretty much like arrays in terms of memory management, so
 everything related to arrays applies here too. Below I discuss some convenience
 techniques and some pitfalls.
 
-[**repeat.go**](https://github.com/fluhus/snopher/blob/master/src/repeat/repeat.go)
+[**string.go**](https://github.com/fluhus/snopher/blob/master/src/string/string.go)
 
 ```go
 //export repeat
@@ -249,10 +249,10 @@ func repeat(s *C.char, n int64, out *byte, outN int64) *byte {
 }
 ```
 
-[**repeat.py**](https://github.com/fluhus/snopher/blob/master/src/repeat/repeat.py)
+[**string.py**](https://github.com/fluhus/snopher/blob/master/src/string/string.py)
 
 ```python
-lib = ctypes.CDLL('./repeat.dll')
+lib = ctypes.CDLL('./string.dll')
 repeat = lib.repeat
 
 repeat.argtypes = [
@@ -345,7 +345,7 @@ Numpy provides access to its underlying buffers using the
 attribute to get the underlying numpy array, and then use numpy's syntax to get
 the actual pointer. This way you can change the array/table in place.
 
-[**table.go**](https://github.com/fluhus/snopher/blob/master/src/table/table.go)
+[**numpypandas.go**](https://github.com/fluhus/snopher/blob/master/src/numpypandas/numpypandas.go)
 
 ```go
 //export increase
@@ -357,10 +357,10 @@ func increase(numsPtr *int64, n int64, a int64) {
 }
 ```
 
-[**table.py**](https://github.com/fluhus/snopher/blob/master/src/table/table.py)
+[**numpypandas.py**](https://github.com/fluhus/snopher/blob/master/src/numpypandas/numpypandas.py)
 
 ```python
-lib = ctypes.CDLL('./table.dll')
+lib = ctypes.CDLL('./numpypandas.dll')
 increase = lib.increase
 
 increase.argtypes = [
@@ -422,7 +422,7 @@ the copy to Go will not affect the original table.
 To work with structs, you need to define them both in Python and in C. Exporting
 Go structs is not possible.
 
-[**person.go**](https://github.com/fluhus/snopher/blob/master/src/person/person.go)
+[**structs.go**](https://github.com/fluhus/snopher/blob/master/src/structs/structs.go)
 
 ```go
 /*
@@ -450,7 +450,7 @@ func fill(p *C.struct_person) {
 }
 ```
 
-[**person.py**](https://github.com/fluhus/snopher/blob/master/src/person/person.py)
+[**structs.py**](https://github.com/fluhus/snopher/blob/master/src/structs/structs.py)
 
 ```python
 class Person(ctypes.Structure):
@@ -462,7 +462,7 @@ class Person(ctypes.Structure):
     ]
 
 
-lib = ctypes.CDLL('./person.dll')
+lib = ctypes.CDLL('./structs.dll')
 
 fill = lib.fill
 fill.argtypes = [ctypes.POINTER(Person)]
@@ -498,7 +498,7 @@ will deallocate an object's buffers, and a finalizer in Python that will call
 the Go finalizer. The Python finalizer will be called automatically when the
 object's reference count goes to zero.
 
-[**user.go**](https://github.com/fluhus/snopher/blob/master/src/user/user.go)
+[**del.go**](https://github.com/fluhus/snopher/blob/master/src/del/del.go)
 
 ```go
 /*
@@ -535,7 +535,7 @@ func delUserInfo(info C.struct_userInfo) {
 }
 ```
 
-[**user.py**](https://github.com/fluhus/snopher/blob/master/src/user/user.py)
+[**del.py**](https://github.com/fluhus/snopher/blob/master/src/del/del.py)
 
 ```python
 class UserInfo(ctypes.Structure):
@@ -545,7 +545,7 @@ class UserInfo(ctypes.Structure):
         del_user_info(self)
 
 
-lib = ctypes.CDLL('user.dll')
+lib = ctypes.CDLL('del.dll')
 get_user_info = lib.getUserInfo
 get_user_info.argtypes = [ctypes.c_char_p]
 get_user_info.restype = UserInfo
@@ -580,8 +580,8 @@ Name: Bob
 Description: User "Bob" has 3 letters in their name
 Name length: 3
 -----------
-Freeing user "Alice"
-Freeing user "Bob"
+Freeing user info: User "Alice" has 5 letters in their name
+Freeing user info: User "Bob" has 3 letters in their name
 Did I remember to free my memory?
 ```
 
@@ -594,7 +594,7 @@ Did I remember to free my memory?
 Communicating Go errors back to Python is essential for a complete program flow.
 To accomplish that, we will create a reusable error type.
 
-[**erring.go**](https://github.com/fluhus/snopher/blob/master/src/erring/erring.go)
+[**error.go**](https://github.com/fluhus/snopher/blob/master/src/error/error.go)
 
 ```go
 /*
@@ -625,7 +625,7 @@ func delError(err C.error) {
 }
 ```
 
-[**erring.py**](https://github.com/fluhus/snopher/blob/master/src/erring/erring.py)
+[**error.py**](https://github.com/fluhus/snopher/blob/master/src/error/error.py)
 
 ```python
 class Error(ctypes.Structure):

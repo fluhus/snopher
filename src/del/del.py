@@ -8,7 +8,7 @@ class UserInfo(ctypes.Structure):
         del_user_info(self)
 
 
-lib = ctypes.CDLL('user.dll')
+lib = ctypes.CDLL('del.dll')
 get_user_info = lib.getUserInfo
 get_user_info.argtypes = [ctypes.c_char_p]
 get_user_info.restype = UserInfo
