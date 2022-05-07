@@ -648,9 +648,8 @@ del_error = lib.delError
 del_error.argtypes = [Error]
 ```
 
-We can use the new error type in structs and functions with multiple return
-values (see the example code files). Note that since Error has its own `__del__`
-function, we can use an Error as a struct field without having to finalize it.
+We can use the new Error type in structs and functions with multiple return
+values (see the example code files).
 
 # Performance Tips
 
