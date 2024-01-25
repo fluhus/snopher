@@ -5,9 +5,9 @@ repeat = lib.repeat
 
 repeat.argtypes = [
     ctypes.c_char_p,
-    ctypes.c_longlong,
+    ctypes.c_int64,
     ctypes.c_char_p,
-    ctypes.c_longlong,
+    ctypes.c_int64,
 ]
 repeat.restype = ctypes.c_char_p
 

@@ -108,8 +108,8 @@ lib = ctypes.CDLL('./primitive.dll')
 add = lib.add
 
 # Make python convert its values to C representation.
-add.argtypes = [ctypes.c_longlong, ctypes.c_longlong]
-add.restype = ctypes.c_longlong
+add.argtypes = [ctypes.c_int64, ctypes.c_int64]
+add.restype = ctypes.c_int64
 
 print('10 + 15 =', add(10, 15))
 ```
@@ -174,7 +174,7 @@ squares = lib.squares
 squares.argtypes = [
     ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double),
-    ctypes.c_longlong,
+    ctypes.c_int64,
 ]
 
 # Building buffers from arrays is more efficient than
@@ -257,9 +257,9 @@ repeat = lib.repeat
 
 repeat.argtypes = [
     ctypes.c_char_p,
-    ctypes.c_longlong,
+    ctypes.c_int64,
     ctypes.c_char_p,
-    ctypes.c_longlong,
+    ctypes.c_int64,
 ]
 repeat.restype = ctypes.c_char_p
 
@@ -364,9 +364,9 @@ lib = ctypes.CDLL('./numpypandas.dll')
 increase = lib.increase
 
 increase.argtypes = [
-    ctypes.POINTER(ctypes.c_longlong),
-    ctypes.c_longlong,
-    ctypes.c_longlong,
+    ctypes.POINTER(ctypes.c_int64),
+    ctypes.c_int64,
+    ctypes.c_int64,
 ]
 
 people = pandas.DataFrame({
@@ -458,7 +458,7 @@ class Person(ctypes.Structure):
         ('first_name', ctypes.c_char_p),
         ('last_name', ctypes.c_char_p),
         ('full_name', ctypes.c_char_p),
-        ('full_name_len', ctypes.c_longlong),
+        ('full_name_len', ctypes.c_int64),
     ]
 
 

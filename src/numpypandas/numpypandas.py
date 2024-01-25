@@ -6,15 +6,17 @@ lib = ctypes.CDLL('./numpypandas.dll')
 increase = lib.increase
 
 increase.argtypes = [
-    ctypes.POINTER(ctypes.c_longlong),
-    ctypes.c_longlong,
-    ctypes.c_longlong,
+    ctypes.POINTER(ctypes.c_int64),
+    ctypes.c_int64,
+    ctypes.c_int64,
 ]
 
-people = pandas.DataFrame({
-    'name': ['Alice', 'Bob', 'Charlie'],
-    'age': [20, 30, 40],
-})
+people = pandas.DataFrame(
+    {
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [20, 30, 40],
+    }
+)
 
 # First we check the type.
 ages = people.age

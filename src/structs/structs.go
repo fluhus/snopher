@@ -1,12 +1,13 @@
 package main
 
 /*
-struct person {
+#include <stdint.h>
+typedef struct person {
   char* firstName;
   char* lastName;
   char* fullName;
-  long long fullNameLen;
-};
+  int64_t fullNameLen;
+} person;
 */
 import "C"
 import (
@@ -15,7 +16,7 @@ import (
 )
 
 //export fill
-func fill(p *C.struct_person) {
+func fill(p *C.person) {
 	buf := bytes.NewBuffer(unsafe.Slice((*byte)(unsafe.Pointer(p.fullName)),
 		p.fullNameLen)[:0])
 	first := C.GoString(p.firstName)

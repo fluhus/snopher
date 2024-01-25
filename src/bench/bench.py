@@ -45,7 +45,7 @@ def benchmark_pi():
     print('*** Pi ***')
 
     pi = lib.pi
-    pi.argtypes = [ctypes.c_longlong]
+    pi.argtypes = [ctypes.c_int64]
     pi.restype = ctypes.c_double
 
     n = 10000000
@@ -54,7 +54,7 @@ def benchmark_pi():
         gopy = pi(n)
 
     with timer('Python', n=n):
-        pypi = sum((-1)**i * 4 / (i * 2 + 1) for i in range(n))
+        pypi = sum((-1) ** i * 4 / (i * 2 + 1) for i in range(n))
 
     print('Go pi =', gopy)
     print('Py pi =', pypi)
@@ -84,7 +84,7 @@ def benchmark_list_conversion():
 def benchmark_shuffle():
     print('*** Shuffle ***')
     shuffle = lib.shuffle
-    shuffle.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_longlong]
+    shuffle.argtypes = [ctypes.POINTER(ctypes.c_double), ctypes.c_int64]
 
     n = 10000000
     with timer('Alloc'):
@@ -99,7 +99,7 @@ def benchmark_shuffle():
     with timer('Random'):
         random.shuffle(nums)
 
-    # Importing numpy.random make ctypes.CDLL not find the dll. :-\
+    # Importing numpy.random makes ctypes.CDLL not find the dll. :-\
     from numpy import random as nprandom
 
     with timer('Numpy'):
@@ -111,9 +111,9 @@ def benchmark_dot():
     dot = lib.dot
     dot.argtypes = [
         ctypes.POINTER(ctypes.c_double),
-        ctypes.c_longlong,
+        ctypes.c_int64,
         ctypes.POINTER(ctypes.c_double),
-        ctypes.c_longlong,
+        ctypes.c_int64,
     ]
     dot.restype = ctypes.c_double
 

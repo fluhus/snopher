@@ -6,7 +6,7 @@ class Person(ctypes.Structure):
         ('first_name', ctypes.c_char_p),
         ('last_name', ctypes.c_char_p),
         ('full_name', ctypes.c_char_p),
-        ('full_name_len', ctypes.c_longlong),
+        ('full_name_len', ctypes.c_int64),
     ]
 
 

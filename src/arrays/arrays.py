@@ -1,5 +1,5 @@
-from array import array
 import ctypes
+from array import array
 
 lib = ctypes.CDLL('./arrays.dll')
 squares = lib.squares
@@ -7,7 +7,7 @@ squares = lib.squares
 squares.argtypes = [
     ctypes.POINTER(ctypes.c_double),
     ctypes.POINTER(ctypes.c_double),
-    ctypes.c_longlong,
+    ctypes.c_int64,
 ]
 
 # Building buffers from arrays is more efficient than
