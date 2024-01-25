@@ -25,7 +25,7 @@ func pi(n int64) float64 {
 //export shuffle
 func shuffle(pnums *float64, n int64) {
 	r := rand.New(rand.NewSource(0))
-	nums := (*[1 << 30]float64)(unsafe.Pointer(pnums))[:n:n]
+	nums := unsafe.Slice(pnums, n)
 	r.Shuffle(int(n), func(i, j int) {
 		nums[i], nums[j] = nums[j], nums[i]
 	})
@@ -33,8 +33,8 @@ func shuffle(pnums *float64, n int64) {
 
 //export dot
 func dot(pa *float64, na int64, pb *float64, nb int64) float64 {
-	a := (*[1 << 30]float64)(unsafe.Pointer(pa))[:na:na]
-	b := (*[1 << 30]float64)(unsafe.Pointer(pb))[:nb:nb]
+	a := unsafe.Slice(pa, na)
+	b := unsafe.Slice(pb, nb)
 	result := 0.0
 	for i := int64(0); i < na; i++ {
 		result += a[i] * b[i]
