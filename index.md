@@ -179,9 +179,7 @@ func squares(numsPtr *float64, outPtr *float64, n int64) {
 <!-- gen:arrays/arrays.py -->
 
 ```python
-from array 
-
-lib = ctypes.CDLL('./arrays.dll')
+lib = ctypes.CDLL('./arrays.so')
 squares = lib.squares
 
 squares.argtypes = [
@@ -198,16 +196,14 @@ out = array('d', [0, 0, 0])
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
 squares(nums_ptr, out_ptr, len(nums))
-print('nums:', list(nums))
-print('out:', list(out))
+print('nums:', list(nums), 'out:', list(out))
 ```
 
 Run:
 
 ```
 > python squares.py
-nums: [1.0, 2.0, 3.0]
-out: [1.0, 4.0, 9.0]
+nums: [1.0, 2.0, 3.0] out: [1.0, 4.0, 9.0]
 >
 ```
 
@@ -380,7 +376,7 @@ func increase(numsPtr *int64, n int64, a int64) {
 <!-- gen:numpypandas/numpypandas.py -->
 
 ```python
-lib = ctypes.CDLL('./numpypandas.dll')
+lib = ctypes.CDLL('./numpypandas.so')
 increase = lib.increase
 
 increase.argtypes = [
@@ -488,7 +484,7 @@ class Person(ctypes.Structure):
         ('full_name_len', ctypes.c_int64),
     ]
 
-lib = ctypes.CDLL('./structs.dll')
+lib = ctypes.CDLL('./structs.so')
 
 fill = lib.fill
 fill.argtypes = [ctypes.POINTER(Person)]
@@ -498,7 +494,7 @@ buf = ctypes.create_string_buffer(buf_size)
 person = Person(b'John', b'Galt', buf.value, len(buf))
 fill(ctypes.pointer(person))
 
-print(person.full_name)
+print(person.full_name.decode())
 ```
 
 Since we cannot export Go structs, we define them in C by adding a comment
@@ -574,7 +570,7 @@ class UserInfo(ctypes.Structure):
     def __del__(self):
         del_user_info(self)
 
-lib = ctypes.CDLL('del.dll')
+lib = ctypes.CDLL('./del.so')
 get_user_info = lib.getUserInfo
 get_user_info.argtypes = [ctypes.c_char_p]
 get_user_info.restype = UserInfo
@@ -691,7 +687,7 @@ class EvenResult(ctypes.Structure):
         ('err', Error),
     ]
 
-lib = ctypes.CDLL('./error.dll')
+lib = ctypes.CDLL('./error.so')
 
 del_error = lib.delError
 del_error.argtypes = [Error]
@@ -702,7 +698,11 @@ even.restype = EvenResult
 
 for i in (0, 1, 2, 3, -5):
     e = even(i)
-    e.err.raise_if_err()
+    try:
+        e.err.raise_if_err()
+    except IOError as err:
+        print('Error:', err)
+        continue
     print(i, 'even:', e.result)
 ```
 

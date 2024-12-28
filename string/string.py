@@ -1,6 +1,6 @@
 import ctypes
 
-lib = ctypes.CDLL('./string.dll')
+lib = ctypes.CDLL('./string.so')
 repeat = lib.repeat
 
 repeat.argtypes = [

@@ -10,7 +10,7 @@ class Person(ctypes.Structure):
     ]
 
 
-lib = ctypes.CDLL('./structs.dll')
+lib = ctypes.CDLL('./structs.so')
 
 fill = lib.fill
 fill.argtypes = [ctypes.POINTER(Person)]
@@ -20,4 +20,4 @@ buf = ctypes.create_string_buffer(buf_size)
 person = Person(b'John', b'Galt', buf.value, len(buf))
 fill(ctypes.pointer(person))
 
-print(person.full_name)
+print(person.full_name.decode())

@@ -23,7 +23,7 @@ class EvenResult(ctypes.Structure):
     ]
 
 
-lib = ctypes.CDLL('./error.dll')
+lib = ctypes.CDLL('./error.so')
 
 del_error = lib.delError
 del_error.argtypes = [Error]
@@ -34,5 +34,9 @@ even.restype = EvenResult
 
 for i in (0, 1, 2, 3, -5):
     e = even(i)
-    e.err.raise_if_err()
+    try:
+        e.err.raise_if_err()
+    except IOError as err:
+        print('Error:', err)
+        continue
     print(i, 'even:', e.result)

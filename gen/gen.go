@@ -61,8 +61,8 @@ func readPyFile(file string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	data = regexp.MustCompile("import [^\n]+").ReplaceAll(data, nil)
 	data = regexp.MustCompile("from [^\n]+ import [^\n]+").ReplaceAll(data, nil)
+	data = regexp.MustCompile("import [^\n]+").ReplaceAll(data, nil)
 	data = regexp.MustCompile("\n\n+").ReplaceAll(data, []byte("\n\n"))
 	data = regexp.MustCompile("^\n+").ReplaceAll(data, nil)
 	data = regexp.MustCompile("\n+$").ReplaceAll(data, nil)

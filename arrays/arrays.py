@@ -1,7 +1,7 @@
 import ctypes
 from array import array
 
-lib = ctypes.CDLL('./arrays.dll')
+lib = ctypes.CDLL('./arrays.so')
 squares = lib.squares
 
 squares.argtypes = [
@@ -18,5 +18,4 @@ out = array('d', [0, 0, 0])
 out_ptr = (ctypes.c_double * len(out)).from_buffer(out)
 
 squares(nums_ptr, out_ptr, len(nums))
-print('nums:', list(nums))
-print('out:', list(out))
+print('nums:', list(nums), 'out:', list(out))

@@ -24,13 +24,13 @@ jobs:
 
     - name: Build Go code
       run: |
-        for x in hello primitive; do
+        for x in hello primitive arrays string numpypandas structs del error; do
           go build -buildmode=c-shared -o $x.so ./$x
         done
 
     - name: Run Python script
       run: |
-        for x in hello primitive; do
+        for x in hello primitive arrays string numpypandas structs del error; do
           python $x/$x.py > $x.out
         done
 
@@ -44,5 +44,21 @@ jobs:
         if [ "$(cat primitive.out)" != "10 + 15 = 25" ]; then
           echo "Output is incorrect:"
           printf '%q\n' "$(cat primitive.out)"
+          exit 1
+        fi
+        if [ "$(cat arrays.out)" != "nums: [1.0, 2.0, 3.0] out: [1.0, 4.0, 9.0]" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat arrays.out)"
+          exit 1
+        fi
+        if [ "$(cat string.out)" != "Badger * 4 = BadgerBadgerBadgerBadger
+        Snake * 5 = SnakeSnakeSnakeSnakeSnake" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat string.out)"
+          exit 1
+        fi
+        if [ "$(cat structs.out)" != "John Galt" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat structs.out)"
           exit 1
         fi
