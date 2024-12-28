@@ -23,16 +23,26 @@ jobs:
         python-version: '3.x'
 
     - name: Build Go code
-      run: go build -buildmode=c-shared -o hello.so ./hello
+      run: |
+        for x in hello primitive; do
+          go build -buildmode=c-shared -o $x.so ./$x
+        done
 
     - name: Run Python script
-      run: python hello/hello.py > output.txt
+      run: |
+        for x in hello primitive; do
+          python $x/$x.py > $x.out
+        done
 
     - name: Check output
       run: |
-        if [ "$(cat output.txt)" == "Hello world!" ]; then
-          echo "Output is correct"
-        else
-          echo "Output is incorrect"
+        if [ "$(cat hello.out)" != "Hello world!" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat hello.out)"
+          exit 1
+        fi
+        if [ "$(cat primitive.out)" != "10 + 15 = 25" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat primitive.out)"
           exit 1
         fi

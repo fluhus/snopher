@@ -1,6 +1,6 @@
 import ctypes
 
-lib = ctypes.CDLL('./primitive.dll')
+lib = ctypes.CDLL('./primitive.so')
 add = lib.add
 
 # Make python convert its values to C representation.
