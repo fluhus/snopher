@@ -30,7 +30,7 @@ jobs:
 
     - name: Check output
       run: |
-        if [ "$(cat output.txt)" == "" ]; then
+        if [ "$(cat output.txt)" == "Hello world!" ]; then
           echo "Output is correct"
         else
           echo "Output is incorrect"
