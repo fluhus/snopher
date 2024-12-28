@@ -36,18 +36,16 @@ Let's start with the bare minimum.
 
 [**hello.go**](https://github.com/fluhus/snopher/blob/master/hello/hello.go)
 
-```go
-package main
+<!-- gen:hello/hello.go -->
 
+```go
 import "C"
 import "fmt"
 
 //export hello
 func hello() {
-    fmt.Println("Hello world!")
+	fmt.Println("Hello world!")
 }
-
-func main() {}
 ```
 
 Build:
@@ -61,10 +59,10 @@ go build -o hello.so -buildmode=c-shared hello.go
 
 [**hello.py**](https://github.com/fluhus/snopher/blob/master/hello/hello.py)
 
-```python
-import ctypes
+<!-- gen:hello/hello.py -->
 
-lib = ctypes.CDLL('./hello.dll')  # Or hello.so if on Linux.
+```python
+lib = ctypes.CDLL('./hello.so')  # Or hello.dll if on Windows.
 hello = lib.hello
 
 hello()
@@ -94,17 +92,23 @@ example.
 
 [**primitive.go**](https://github.com/fluhus/snopher/blob/master/primitive/primitive.go)
 
+<!-- gen:primitive/primitive.go -->
+
 ```go
+import "C"
+
 //export add
 func add(a, b int64) int64 {
-    return a + b
+	return a + b
 }
 ```
 
 [**primitive.py**](https://github.com/fluhus/snopher/blob/master/primitive/primitive.py)
 
+<!-- gen:primitive/primitive.py -->
+
 ```python
-lib = ctypes.CDLL('./primitive.dll')
+lib = ctypes.CDLL('./primitive.so')
 add = lib.add
 
 # Make python convert its values to C representation.
@@ -146,7 +150,12 @@ up in buffer overflows and memory leaks.
 
 [**arrays.go**](https://github.com/fluhus/snopher/blob/master/arrays/arrays.go)
 
+<!-- gen:arrays/arrays.go -->
+
 ```go
+import "C"
+import "unsafe"
+
 // Returns the squares of the input numbers.
 //
 //export squares
@@ -167,7 +176,11 @@ func squares(numsPtr *float64, outPtr *float64, n int64) {
 
 [**arrays.py**](https://github.com/fluhus/snopher/blob/master/arrays/arrays.py)
 
+<!-- gen:arrays/arrays.py -->
+
 ```python
+from array 
+
 lib = ctypes.CDLL('./arrays.dll')
 squares = lib.squares
 
@@ -347,7 +360,12 @@ the actual pointer. This way you can change the array/table in place.
 
 [**numpypandas.go**](https://github.com/fluhus/snopher/blob/master/numpypandas/numpypandas.go)
 
+<!-- gen:numpypandas/numpypandas.go -->
+
 ```go
+import "C"
+import "unsafe"
+
 //export increase
 func increase(numsPtr *int64, n int64, a int64) {
 	nums := unsafe.Slice(numsPtr, n)
@@ -359,6 +377,8 @@ func increase(numsPtr *int64, n int64, a int64) {
 
 [**numpypandas.py**](https://github.com/fluhus/snopher/blob/master/numpypandas/numpypandas.py)
 
+<!-- gen:numpypandas/numpypandas.py -->
+
 ```python
 lib = ctypes.CDLL('./numpypandas.dll')
 increase = lib.increase
@@ -369,10 +389,12 @@ increase.argtypes = [
     ctypes.c_int64,
 ]
 
-people = pandas.DataFrame({
-    'name': ['Alice', 'Bob', 'Charlie'],
-    'age': [20, 30, 40],
-})
+people = pandas.DataFrame(
+    {
+        'name': ['Alice', 'Bob', 'Charlie'],
+        'age': [20, 30, 40],
+    }
+)
 
 # First we check the type.
 ages = people.age
@@ -424,14 +446,17 @@ Go structs is not possible.
 
 [**structs.go**](https://github.com/fluhus/snopher/blob/master/structs/structs.go)
 
+<!-- gen:structs/structs.go -->
+
 ```go
 /*
-struct person {
+#include <stdint.h>
+typedef struct person {
   char* firstName;
   char* lastName;
   char* fullName;
-  long long fullNameLen;
-};
+  int64_t fullNameLen;
+} person;
 */
 import "C"
 import (
@@ -440,7 +465,7 @@ import (
 )
 
 //export fill
-func fill(p *C.struct_person) {
+func fill(p *C.person) {
 	buf := bytes.NewBuffer(unsafe.Slice((*byte)(unsafe.Pointer(p.fullName)),
 		p.fullNameLen)[:0])
 	first := C.GoString(p.firstName)
@@ -452,6 +477,8 @@ func fill(p *C.struct_person) {
 
 [**structs.py**](https://github.com/fluhus/snopher/blob/master/structs/structs.py)
 
+<!-- gen:structs/structs.py -->
+
 ```python
 class Person(ctypes.Structure):
     _fields_ = [
@@ -460,7 +487,6 @@ class Person(ctypes.Structure):
         ('full_name', ctypes.c_char_p),
         ('full_name_len', ctypes.c_int64),
     ]
-
 
 lib = ctypes.CDLL('./structs.dll')
 
@@ -500,6 +526,8 @@ object's reference count goes to zero.
 
 [**del.go**](https://github.com/fluhus/snopher/blob/master/del/del.go)
 
+<!-- gen:del/del.go -->
+
 ```go
 /*
 #include <stdlib.h>
@@ -537,6 +565,8 @@ func delUserInfo(info C.struct_userInfo) {
 
 [**del.py**](https://github.com/fluhus/snopher/blob/master/del/del.py)
 
+<!-- gen:del/del.py -->
+
 ```python
 class UserInfo(ctypes.Structure):
     _fields_ = [('info', ctypes.c_char_p)]
@@ -544,14 +574,12 @@ class UserInfo(ctypes.Structure):
     def __del__(self):
         del_user_info(self)
 
-
 lib = ctypes.CDLL('del.dll')
 get_user_info = lib.getUserInfo
 get_user_info.argtypes = [ctypes.c_char_p]
 get_user_info.restype = UserInfo
 del_user_info = lib.delUserInfo
 del_user_info.argtypes = [UserInfo]
-
 
 def work_work():
     user1 = get_user_info('Alice'.encode())
@@ -563,7 +591,6 @@ def work_work():
     print('-----------')
 
     # Now user1 and user2 should get deleted.
-
 
 work_work()
 print('Did I remember to free my memory?')
@@ -596,6 +623,8 @@ To accomplish that, we will create a reusable error type.
 
 [**error.go**](https://github.com/fluhus/snopher/blob/master/error/error.go)
 
+<!-- gen:error/error.go -->
+
 ```go
 /*
 #include <stdlib.h>
@@ -604,8 +633,10 @@ typedef struct {
 } error;
 */
 import "C"
-
-// ...
+import (
+	"fmt"
+	"unsafe"
+)
 
 func newError(s string, args ...interface{}) C.error {
 	if s == "" {
@@ -623,9 +654,21 @@ func delError(err C.error) {
 	}
 	C.free(unsafe.Pointer(err.err))
 }
+
+// Checks if a non-negative number is even.
+//
+//export even
+func even(i int64) (bool, C.error) {
+	if i < 0 {
+		return false, newError("%v is negative, want at least 0", i)
+	}
+	return i%2 == 0, newError("")
+}
 ```
 
 [**error.py**](https://github.com/fluhus/snopher/blob/master/error/error.py)
+
+<!-- gen:error/error.py -->
 
 ```python
 class Error(ctypes.Structure):
@@ -641,11 +684,26 @@ class Error(ctypes.Structure):
         if self.err is not None:
             raise IOError(self.err.decode())
 
+class EvenResult(ctypes.Structure):
+    # Multiple return values can be grabbed in a struct.
+    _fields_ = [
+        ('result', ctypes.c_bool),
+        ('err', Error),
+    ]
 
-# ...
+lib = ctypes.CDLL('./error.dll')
 
 del_error = lib.delError
 del_error.argtypes = [Error]
+
+even = lib.even
+even.argtypes = [ctypes.c_int64]
+even.restype = EvenResult
+
+for i in (0, 1, 2, 3, -5):
+    e = even(i)
+    e.err.raise_if_err()
+    print(i, 'even:', e.result)
 ```
 
 We can use the new Error type in structs and functions with multiple return
@@ -749,6 +807,3 @@ cvals = (ctypes.c_double * n).from_buffer(arr)
 ```
 
 ![list](https://raw.githubusercontent.com/fluhus/snopher/master/list.png)
-
-
-
