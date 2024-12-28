@@ -1,6 +1,6 @@
 import ctypes
 
-lib = ctypes.CDLL('./hello.dll')  # Or hello.so if on Linux.
+lib = ctypes.CDLL('./hello.so')  # Or hello.dll if on Windows.
 hello = lib.hello
 
 hello()

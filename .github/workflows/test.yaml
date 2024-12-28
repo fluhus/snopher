@@ -1,0 +1,38 @@
+name: Compile Go and run Python
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 'stable'
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+
+    - name: Build Go code
+      run: go build -buildmode=c-shared -o hello.so ./hello
+
+    - name: Run Python script
+      run: python hello/hello.py > output.txt
+
+    - name: Check output
+      run: |
+        if [ "$(cat output.txt)" == "" ]; then
+          echo "Output is correct"
+        else
+          echo "Output is incorrect"
+          exit 1
+        fi

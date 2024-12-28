@@ -1,3 +1,4 @@
 # Build products.
 *.h
 *.dll
+*.so
