@@ -1,0 +1,7 @@
+Freeing user info: User "Alice" has 5 letters in their name
+Freeing user info: User "Bob" has 3 letters in their name
+Info: User "Alice" has 5 letters in their name
+-----------
+Info: User "Bob" has 3 letters in their name
+-----------
+Did I remember to free my memory?

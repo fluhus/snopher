@@ -26,48 +26,26 @@ jobs:
       run: |
         pip install pandas
 
-    - name: Build Go code
-      run: |
-        for x in hello primitive arrays string numpypandas structs del error alloc; do
-          go build -buildmode=c-shared -o $x.so ./$x
-        done
+    - name: "Test: hello"
+      run: sh test.sh hello
 
-    - name: Run Python script
-      run: |
-        for x in hello primitive arrays string numpypandas structs del error alloc; do
-          python $x/$x.py > $x.out
-        done
+    - name: "Test: primitive"
+      run: sh test.sh primitive
 
-    - name: Check output
-      run: |
-        if [ "$(cat hello.out)" != "Hello world!" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat hello.out)"
-          exit 1
-        fi
-        if [ "$(cat primitive.out)" != "10 + 15 = 25" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat primitive.out)"
-          exit 1
-        fi
-        if [ "$(cat arrays.out)" != "nums: [1.0, 2.0, 3.0] out: [1.0, 4.0, 9.0]" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat arrays.out)"
-          exit 1
-        fi
-        if [ "$(cat string.out)" != "Badger * 4 = BadgerBadgerBadgerBadger
-        Snake * 5 = SnakeSnakeSnakeSnakeSnake" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat string.out)"
-          exit 1
-        fi
-        if [ "$(cat structs.out)" != "John Galt" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat structs.out)"
-          exit 1
-        fi
-        if [ "$(cat alloc.out)" != "Square roots up to 5: [1.0, 1.4142135623730951, 1.7320508075688772, 2.0, 2.23606797749979]" ]; then
-          echo "Output is incorrect:"
-          printf '%q\n' "$(cat alloc.out)"
-          exit 1
-        fi
+    - name: "Test: arrays"
+      run: sh test.sh arrays
+
+    - name: "Test: string"
+      run: sh test.sh string
+
+    - name: "Test: numpypandas"
+      run: sh test.sh numpypandas
+
+    - name: "Test: alloc"
+      run: sh test.sh alloc
+
+    - name: "Test: structs"
+      run: sh test.sh structs
+
+    - name: "Test: del"
+      run: sh test.sh del

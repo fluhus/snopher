@@ -525,7 +525,7 @@ And for some extra leisure, a string function.
 
 ```go
 func allocString(alloc C.alloc_f, s string) {
-	b := allocBytes(alloc, len(s)+1) // +1 for the null terminator!
+	b := allocBytes(alloc, len(s))
 	copy(b, s)
 }
 ```
@@ -574,7 +574,7 @@ func allocBytes(alloc C.alloc_f, n int) []byte {
 }
 
 func allocString(alloc C.alloc_f, s string) {
-	b := allocBytes(alloc, len(s)+1) // +1 for the null terminator!
+	b := allocBytes(alloc, len(s))
 	copy(b, s)
 }
 

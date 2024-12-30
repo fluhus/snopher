@@ -1,0 +1,2 @@
+Badger * 4 = BadgerBadgerBadgerBadger
+Snake * 5 = SnakeSnakeSnakeSnakeSnake
