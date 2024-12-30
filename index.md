@@ -435,6 +435,191 @@ For example, if we have a DataFrame called `people`, then
 `people[people['age'] < 40]` will return a copy of `people`. Therefore passing
 the copy to Go will not affect the original table.
 
+# Calling Python to Allocate Memory
+
+Returning dynamically allocated arrays from Go to Python can be tricky,
+as the memory needs to be freed manually.
+Can we find a safer way to do that? Well, yes!
+
+Python can allocate memory buffers using the
+[array](https://docs.python.org/3/library/array.html)
+library.
+These arrays are freed using Python's regular garbage collection.
+But how can Go ask Python to allocate arrays on the go?
+Answer: we'll pass a callback to Go that would allocate a python array
+and return a pointer to that array's buffer.
+
+Confused? So am I.
+
+Let's break it down. First, we'll make an allocator function in Python.
+
+```python
+# A function that receives an array type string and a size,
+# and returns a pointer.
+alloc_f = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int64)
+
+arrays: list[array] = []
+
+@alloc_f
+def my_alloc(typecode, size):
+    arr = array(typecode.decode(), (0 for _ in range(size)))
+    arrays.append(arr)
+    return arr.buffer_info()[0]
+```
+
+Using `CFUNCTYPE` allows us to use a Python function as a C callback.
+The `typecode` parameter is used to choose the array's data type.
+
+Notice that the function keeps the generated arrays in a list.
+**We have to keep them alive until the Go function returns,
+in order to keep them from being garbage-collected.**
+
+What happens in Go?
+
+We'll start with some C weirdness,
+since Go can't call the callback directly.
+
+```go
+/*
+#include <stdlib.h>
+#include <stdint.h>
+
+typedef void* (*alloc_f)(char* t, int64_t n);
+static void* call_alloc_f(alloc_f f, char* t, int64_t n) {return f(t,n);}
+*/
+import "C"
+```
+
+Next, for convenience, we'll make a wrapper around this,
+so the rest of our code can be in plain Go.
+
+```go
+// Calls the Python alloc callback and returns the allocated buffer
+// as a slice.
+func allocSlice[T any](alloc C.alloc_f, n int, typeCode string) []T {
+	t := C.CString(typeCode)                      // Make a c-string type code.
+	ptr := C.call_alloc_f(alloc, t, C.int64_t(n)) // Allocate the buffer.
+	C.free(unsafe.Pointer(t))                     // Release c-string.
+	return unsafe.Slice((*T)(ptr), n)             // Wrap with a go-slice.
+}
+```
+
+Now, we can wrap this function with some type-specific functions.
+Notice that the type-codes are Python's array type codes.
+
+```go
+func allocFloats(alloc C.alloc_f, n int) []float64 {
+	return allocSlice[float64](alloc, n, "d")
+}
+
+func allocInts(alloc C.alloc_f, n int) []int64 {
+	return allocSlice[int64](alloc, n, "q")
+}
+
+func allocBytes(alloc C.alloc_f, n int) []byte {
+	return allocSlice[byte](alloc, n, "B")
+}
+```
+
+And for some extra leisure, a string function.
+
+```go
+func allocString(alloc C.alloc_f, s string) {
+	b := allocBytes(alloc, len(s)+1) // +1 for the null terminator!
+	copy(b, s)
+}
+```
+
+To put it all together, let's make a function that reports the
+square roots of integers up to n.
+
+[**alloc.go**](https://github.com/fluhus/snopher/blob/master/alloc/alloc.go)
+
+<!-- gen:alloc/alloc.go -->
+
+```go
+/*
+#include <stdlib.h>
+#include <stdint.h>
+
+typedef void* (*alloc_f)(char* t, int64_t n);
+static void* call_alloc_f(alloc_f f, char* t, int64_t n) {return f(t,n);}
+*/
+import "C"
+import (
+	"fmt"
+	"math"
+	"unsafe"
+)
+
+//export sqrts
+func sqrts(alloc C.alloc_f, n int64) {
+	allocString(alloc, fmt.Sprintf("Square roots up to %d:", n))
+	floats := allocFloats(alloc, int(n))
+	for i := range floats {
+		floats[i] = math.Sqrt(float64(i + 1))
+	}
+}
+
+func allocFloats(alloc C.alloc_f, n int) []float64 {
+	return allocSlice[float64](alloc, n, "d")
+}
+
+func allocInts(alloc C.alloc_f, n int) []int64 {
+	return allocSlice[int64](alloc, n, "q")
+}
+
+func allocBytes(alloc C.alloc_f, n int) []byte {
+	return allocSlice[byte](alloc, n, "B")
+}
+
+func allocString(alloc C.alloc_f, s string) {
+	b := allocBytes(alloc, len(s)+1) // +1 for the null terminator!
+	copy(b, s)
+}
+
+// Calls the Python alloc callback and returns the allocated buffer
+// as a slice.
+func allocSlice[T any](alloc C.alloc_f, n int, typeCode string) []T {
+	t := C.CString(typeCode)                      // Make a c-string type code.
+	ptr := C.call_alloc_f(alloc, t, C.int64_t(n)) // Allocate the buffer.
+	C.free(unsafe.Pointer(t))                     // Release c-string.
+	return unsafe.Slice((*T)(ptr), n)             // Wrap with a go-slice.
+}
+```
+
+[**alloc.py**](https://github.com/fluhus/snopher/blob/master/alloc/alloc.py)
+
+<!-- gen:alloc/alloc.py -->
+
+```python
+# A function that receives an array type string and a size,
+# and returns a pointer.
+alloc_f = ctypes.CFUNCTYPE(ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int64)
+
+arrays: list[array] = []
+
+@alloc_f
+def my_alloc(typecode, size):
+    arr = array(typecode.decode(), (0 for _ in range(size)))
+    arrays.append(arr)
+    return arr.buffer_info()[0]
+
+lib = ctypes.CDLL('./alloc.so')
+sqrts = lib.sqrts
+sqrts.argtypes = [alloc_f, ctypes.c_int64]
+
+sqrts(my_alloc, 5)  # Populates arrays with the result.
+
+print(arrays[0].tobytes().decode(), arrays[1].tolist())
+```
+
+Output:
+
+```
+Square roots up to 5: [1.0, 1.4142135623730951, 1.7320508075688772, 2.0, 2.23606797749979]
+```
+
 # Structs
 
 To work with structs, you need to define them both in Python and in C. Exporting
@@ -607,10 +792,6 @@ Freeing user info: User "Alice" has 5 letters in their name
 Freeing user info: User "Bob" has 3 letters in their name
 Did I remember to free my memory?
 ```
-
-## Multiple Return Values
-
-**UNDER CONSTRUCTION**
 
 # Error Handling
 

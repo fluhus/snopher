@@ -28,13 +28,13 @@ jobs:
 
     - name: Build Go code
       run: |
-        for x in hello primitive arrays string numpypandas structs del error; do
+        for x in hello primitive arrays string numpypandas structs del error alloc; do
           go build -buildmode=c-shared -o $x.so ./$x
         done
 
     - name: Run Python script
       run: |
-        for x in hello primitive arrays string numpypandas structs del error; do
+        for x in hello primitive arrays string numpypandas structs del error alloc; do
           python $x/$x.py > $x.out
         done
 
@@ -64,5 +64,10 @@ jobs:
         if [ "$(cat structs.out)" != "John Galt" ]; then
           echo "Output is incorrect:"
           printf '%q\n' "$(cat structs.out)"
+          exit 1
+        fi
+        if [ "$(cat alloc.out)" != "Square roots up to 5: [1.0, 1.4142135623730951, 1.7320508075688772, 2.0, 2.23606797749979]" ]; then
+          echo "Output is incorrect:"
+          printf '%q\n' "$(cat alloc.out)"
           exit 1
         fi
